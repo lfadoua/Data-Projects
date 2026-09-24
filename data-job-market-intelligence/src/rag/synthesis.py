@@ -42,6 +42,14 @@ def first_quote(source, pattern=None, skill=None):
     return None
 
 
+def anchored_quote(source, anchor, pattern):
+    """Require the named technology and responsibility in the same sentence."""
+    for sentence in sentences(source["chunk_text"]):
+        if anchor in extract_skills(sentence) and re.search(pattern, sentence, re.I):
+            return sentence
+    return None
+
+
 def claim(text, source, quote):
     return {"text": text, "source_id": source["source_id"], "quote": quote}
 
@@ -100,7 +108,11 @@ def synthesize(question, evidence):
         for title, pattern in THEMES:
             matches = []
             for source in evidence:
-                quote = first_quote(source, pattern=pattern)
+                quote = (
+                    anchored_quote(source, requested[0], pattern)
+                    if wants_responsibilities and requested
+                    else first_quote(source, pattern=pattern)
+                )
                 if quote:
                     matches.append((source, quote))
             if len(matches) >= (1 if len(evidence) < 3 else 2):
@@ -111,7 +123,11 @@ def synthesize(question, evidence):
                 break
     if wants_responsibilities:
         points = theme_points
-        intro = "The selected Data Engineer postings describe these responsibilities:"
+        intro = (
+            f"In the selected postings, {requested[0]} appears in responsibilities involving:"
+            if requested
+            else "The selected postings describe these responsibilities:"
+        )
     elif theme_points:
         points.extend(theme_points[:2])
     if not points:

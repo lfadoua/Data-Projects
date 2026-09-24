@@ -154,7 +154,10 @@ def analytical_answer(question, filters, service, explicit_filters=None):
                 data["items"] = [x for x in data["items"] if x["name"] in CLOUD_SKILLS][:limit]
             answer = (
                 "Most requested skills in this historical dataset: "
-                + "; ".join(f"{x['name']} ({x['count']:,})" for x in data["items"][:5])
+                + "; ".join(
+                    f"{x['name']} ({x['count']:,})"
+                    for x in data["items"][: limit if requested else 5]
+                )
                 + ". Each job counts once per skill."
                 if data["items"]
                 else "No tracked skills match these filters."
@@ -184,9 +187,11 @@ def analytical_answer(question, filters, service, explicit_filters=None):
                 if missing:
                     answer += f" {missing['count']:,} postings are {missing['name'].lower()}."
             elif data["items"]:
+                shown = data["items"] if "distribution" in lower else data["items"][:5]
+                heading = "Distribution of" if "distribution" in lower else "Top"
                 answer = (
-                    f"Top {field.replace('_', ' ')} values among {scope}: "
-                    + "; ".join(f"{item['name']} ({item['count']:,})" for item in data["items"][:5])
+                    f"{heading} {field.replace('_', ' ')} values among {scope}: "
+                    + "; ".join(f"{item['name']} ({item['count']:,})" for item in shown)
                     + "."
                 )
             else:

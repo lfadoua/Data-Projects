@@ -66,3 +66,14 @@ def test_missing_publication_dates_and_mixed_questions_clarify(engine):
         engine,
     )
     assert mixed.data == {"supported": False}
+
+
+def test_requested_top_ten_and_full_distribution_are_in_answer(engine):
+    skills = ask(QueryRequest(question="What are the top 10 most requested skills?"), engine)
+    assert skills.route == "analytics"
+    assert all(item["name"] in skills.answer for item in skills.data["items"])
+
+    seniority = ask(QueryRequest(question="What is the distribution of seniority levels?"), engine)
+    assert seniority.route == "analytics"
+    assert seniority.answer.startswith("Distribution of seniority")
+    assert all(item["name"] in seniority.answer for item in seniority.data["items"])

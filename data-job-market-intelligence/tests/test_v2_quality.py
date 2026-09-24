@@ -86,6 +86,39 @@ def test_synthesis_rejects_missing_anchor():
     assert not claims
 
 
+def test_responsibility_synthesis_uses_question_topic_and_role_neutrally():
+    evidence = [
+        {
+            "source_id": "S1",
+            "job_id": "1",
+            "similarity": 0.6,
+            "source_url": "https://example.org/1",
+            "chunk_text": (
+                "Build AWS data pipelines for production. Maintain remote analyst reports."
+            ),
+        },
+        {
+            "source_id": "S2",
+            "job_id": "2",
+            "similarity": 0.6,
+            "source_url": "https://example.org/2",
+            "chunk_text": (
+                "Deploy AWS cloud infrastructure for data services. Test analyst reports."
+            ),
+        },
+    ]
+    answer, _, claims = synthesize(
+        "What AWS-related responsibilities appear in Data Engineer roles?", evidence
+    )
+    assert "AWS appears in responsibilities" in answer
+    assert claims and all("AWS" in item["quote"] for item in claims)
+
+    generic, _, _ = synthesize(
+        "What responsibilities appear in remote Data Analyst roles?", evidence
+    )
+    assert "Data Engineer" not in generic
+
+
 def test_debug_stages_are_development_only(indexed, monkeypatch):
     from src.config.settings import get_settings
     from src.rag import service
