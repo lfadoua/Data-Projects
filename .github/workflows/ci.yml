@@ -1,0 +1,28 @@
+name: Application checks
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: data-job-market-intelligence
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: data-job-market-intelligence/requirements*.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m ruff check .
+      - run: python -m pytest -q
+      - name: Validate Compose
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
+        env:
+          POSTGRES_PASSWORD: ci-validation-only
+      - name: Build images
+        run: docker compose build api frontend
+        env:
+          POSTGRES_PASSWORD: ci-validation-only

@@ -1,0 +1,203 @@
+[
+  {
+    "id": "q01",
+    "question": "How many jobs are in the dataset?",
+    "expected_route": "analytics",
+    "expected_metadata": {}
+  },
+  {
+    "id": "q02",
+    "question": "How many Data Engineer jobs are in France?",
+    "expected_route": "analytics",
+    "expected_metadata": {
+      "job_title": "Data Engineer",
+      "country": "France"
+    }
+  },
+  {
+    "id": "q03",
+    "question": "What percentage of jobs mention Python?",
+    "expected_route": "analytics",
+    "expected_metadata": {
+      "skill": "Python"
+    }
+  },
+  {
+    "id": "q04",
+    "question": "What are the top 10 skills?",
+    "expected_route": "analytics",
+    "expected_metadata": {}
+  },
+  {
+    "id": "q05",
+    "question": "Show the seniority distribution.",
+    "expected_route": "analytics",
+    "expected_metadata": {}
+  },
+  {
+    "id": "q06",
+    "question": "Which city has the most jobs?",
+    "expected_route": "analytics",
+    "expected_metadata": {}
+  },
+  {
+    "id": "q07",
+    "question": "Show the top employers.",
+    "expected_route": "analytics",
+    "expected_metadata": {}
+  },
+  {
+    "id": "q08",
+    "question": "What is the salary distribution?",
+    "expected_route": "analytics",
+    "expected_metadata": {}
+  },
+  {
+    "id": "q09",
+    "question": "Show publication trends by month.",
+    "expected_route": "analytics",
+    "expected_metadata": {}
+  },
+  {
+    "id": "q10",
+    "question": "How many remote Data Analyst jobs are there?",
+    "expected_route": "analytics",
+    "expected_metadata": {
+      "workplace_type": "Remote",
+      "job_title": "Data Analyst"
+    }
+  },
+  {
+    "id": "q11",
+    "question": "What are the top cloud technologies?",
+    "expected_route": "analytics",
+    "expected_metadata": {
+      "topic": "cloud"
+    }
+  },
+  {
+    "id": "q12",
+    "question": "What percentage of Data Engineer jobs mention SQL?",
+    "expected_route": "analytics",
+    "expected_metadata": {
+      "job_title": "Data Engineer",
+      "skill": "SQL"
+    }
+  },
+  {
+    "id": "q13",
+    "question": "What responsibilities are expected from Senior Data Engineers?",
+    "expected_route": "rag",
+    "expected_metadata": {
+      "job_title": "Data Engineer",
+      "seniority": "Senior"
+    }
+  },
+  {
+    "id": "q14",
+    "question": "What do job descriptions say about MLOps?",
+    "expected_route": "rag",
+    "expected_metadata": {
+      "job_title": "MLOps Engineer",
+      "skill": "MLOps"
+    }
+  },
+  {
+    "id": "q15",
+    "question": "What skills appear together with Kubernetes?",
+    "expected_route": "rag",
+    "expected_metadata": {
+      "skill": "Kubernetes"
+    }
+  },
+  {
+    "id": "q16",
+    "question": "Describe leadership expectations for senior profiles.",
+    "expected_route": "rag",
+    "expected_metadata": {
+      "seniority": "Senior"
+    }
+  },
+  {
+    "id": "q17",
+    "question": "What do postings say about building Python pipelines?",
+    "expected_route": "rag",
+    "expected_metadata": {
+      "skill": "Python"
+    }
+  },
+  {
+    "id": "q18",
+    "question": "What cloud skills are associated with Senior Data Engineers in France?",
+    "expected_route": "rag",
+    "expected_metadata": {
+      "country": "France",
+      "seniority": "Senior",
+      "job_title": "Data Engineer",
+      "topic": "cloud"
+    }
+  },
+  {
+    "id": "q19",
+    "question": "Describe machine learning model deployment responsibilities.",
+    "expected_route": "rag",
+    "expected_metadata": {
+      "job_title": "Machine Learning Engineer",
+      "skill": "Machine Learning"
+    }
+  },
+  {
+    "id": "q20",
+    "question": "What do postings say about Tableau dashboards?",
+    "expected_route": "rag",
+    "expected_metadata": {
+      "skill": "Tableau"
+    }
+  },
+  {
+    "id": "q21",
+    "question": "What should I learn?",
+    "expected_route": "rag",
+    "expected_metadata": {}
+  },
+  {
+    "id": "q22",
+    "question": "Tell me about engineering careers.",
+    "expected_route": "rag",
+    "expected_metadata": {}
+  },
+  {
+    "id": "q23",
+    "question": "Describe submarine volcanology research on Neptune.",
+    "expected_route": "rag",
+    "expected_metadata": {},
+    "filters": {
+      "country": "Neptune"
+    },
+    "expect_insufficient": true
+  },
+  {
+    "id": "q24",
+    "question": "How many jobs are in Canada?",
+    "expected_route": "analytics",
+    "expected_metadata": {
+      "country": "Canada"
+    }
+  },
+  {
+    "id": "q25",
+    "question": "What is the workplace distribution?",
+    "expected_route": "analytics",
+    "expected_metadata": {}
+  },
+  {
+    "id": "q26",
+    "question": "Describe jobs in Atlantis.",
+    "expected_route": "rag",
+    "expected_metadata": {},
+    "filters": {
+      "country": "Atlantis"
+    },
+    "expect_insufficient": true
+  }
+]

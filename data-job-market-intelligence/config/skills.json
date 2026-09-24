@@ -1,0 +1,114 @@
+{
+  "version": "v1",
+  "skills": {
+    "Python": [
+      "Python"
+    ],
+    "SQL": [
+      "SQL"
+    ],
+    "Excel": [
+      "Excel"
+    ],
+    "Power BI": [
+      "Power BI",
+      "PowerBI"
+    ],
+    "Tableau": [
+      "Tableau"
+    ],
+    "AWS": [
+      "AWS",
+      "Amazon Web Services"
+    ],
+    "Azure": [
+      "Azure"
+    ],
+    "GCP": [
+      "GCP",
+      "Google Cloud Platform",
+      "Google Cloud"
+    ],
+    "Spark": [
+      "Spark",
+      "PySpark"
+    ],
+    "Hadoop": [
+      "Hadoop"
+    ],
+    "Airflow": [
+      "Airflow"
+    ],
+    "Docker": [
+      "Docker"
+    ],
+    "Kubernetes": [
+      "Kubernetes",
+      "k8s"
+    ],
+    "Terraform": [
+      "Terraform"
+    ],
+    "Databricks": [
+      "Databricks"
+    ],
+    "Snowflake": [
+      "Snowflake"
+    ],
+    "dbt": [
+      "dbt"
+    ],
+    "Kafka": [
+      "Kafka"
+    ],
+    "Git": [
+      "Git"
+    ],
+    "PyTorch": [
+      "PyTorch"
+    ],
+    "TensorFlow": [
+      "TensorFlow"
+    ],
+    "scikit-learn": [
+      "scikit-learn",
+      "sklearn",
+      "scikit learn"
+    ],
+    "MLflow": [
+      "MLflow"
+    ],
+    "FastAPI": [
+      "FastAPI"
+    ],
+    "PostgreSQL": [
+      "PostgreSQL",
+      "Postgres"
+    ],
+    "MongoDB": [
+      "MongoDB"
+    ],
+    "BigQuery": [
+      "BigQuery"
+    ],
+    "Redshift": [
+      "Redshift"
+    ],
+    "SageMaker": [
+      "SageMaker"
+    ],
+    "MLOps": [
+      "MLOps"
+    ],
+    "Machine Learning": [
+      "Machine Learning"
+    ],
+    "Deep Learning": [
+      "Deep Learning"
+    ],
+    "NLP": [
+      "NLP",
+      "Natural Language Processing"
+    ]
+  }
+}
