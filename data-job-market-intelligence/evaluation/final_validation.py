@@ -8,6 +8,7 @@ from pathlib import Path
 from time import perf_counter
 
 import httpx
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from src.database.connection import get_engine
@@ -57,6 +58,56 @@ def check_sources(session, answer, expected_index):
     return issues
 
 
+def check_analytics(session, question, answer):
+    """Reconcile each requested quantitative result with an independent SQL query."""
+    data = answer["data"]
+    if question == QUESTIONS[0][0]:
+        actual = session.execute(
+            text(
+                "SELECT count(*) FROM jobs WHERE lower(normalized_job_title) = "
+                "lower(:title) AND lower(country) = lower(:country)"
+            ),
+            {"title": "Data Engineer", "country": "France"},
+        ).scalar_one()
+        return {"total_jobs": actual}, [] if data["total_jobs"] == actual else [
+            "France Data Engineer count differs from independent SQL"
+        ]
+    if question == QUESTIONS[1][0]:
+        rows = session.execute(
+            text(
+                "SELECT skill, count(*) FROM job_skills GROUP BY skill "
+                "ORDER BY count(*) DESC, skill LIMIT 10"
+            )
+        ).all()
+        actual = [{"name": name, "count": count} for name, count in rows]
+        observed = [{"name": x["name"], "count": x["count"]} for x in data["items"]]
+        return {"top_skills": actual}, [] if observed == actual else [
+            "Top ten skills differ from independent SQL"
+        ]
+    if question == QUESTIONS[2][0]:
+        total = session.execute(text("SELECT count(*) FROM jobs")).scalar_one()
+        count = session.execute(
+            text("SELECT count(*) FROM job_skills WHERE lower(skill) = 'python'")
+        ).scalar_one()
+        actual = {"count": count, "total_jobs": total, "percentage": round(100 * count / total, 2)}
+        observed = {key: data[key] for key in actual}
+        return actual, [] if observed == actual else [
+            "Python percentage differs from independent SQL"
+        ]
+    field = "city" if question == QUESTIONS[3][0] else "seniority"
+    rows = session.execute(
+        text(
+            f"SELECT {field}, count(*) FROM jobs GROUP BY {field} "
+            f"ORDER BY count(*) DESC, {field} LIMIT 10"
+        )
+    ).all()
+    actual = [{"name": name or "Unknown", "count": count} for name, count in rows]
+    observed = [{"name": x["name"], "count": x["count"]} for x in data["items"]]
+    return {"group_by": field, "items": actual}, [] if observed == actual else [
+        f"{field} distribution differs from independent SQL"
+    ]
+
+
 def run(base_url, expected_index):
     report = {
         "recorded_at": datetime.now(timezone.utc).isoformat(),
@@ -87,12 +138,17 @@ def run(base_url, expected_index):
                 issues.extend(check_sources(session, body, expected_index))
                 if not body["sources"]:
                     issues.append("No cited source")
+                db_evidence = None
+            else:
+                db_evidence, analytics_issues = check_analytics(session, question, body)
+                issues.extend(analytics_issues)
             report["questions"].append(
                 {
                     "question": question,
                     "route": body["route"],
                     "filters": body["metadata"].get("filters", {}),
                     "answer": body["answer"],
+                    "database_evidence": db_evidence,
                     "retrieved_jobs": body["metadata"].get("retrieved_jobs"),
                     "retrieved_chunks": len(body["evidence"]),
                     "source_ids": [source["source_id"] for source in body["sources"]],
