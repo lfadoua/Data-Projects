@@ -138,6 +138,8 @@ def run(base_url, expected_index):
                 issues.extend(check_sources(session, body, expected_index))
                 if not body["sources"]:
                     issues.append("No cited source")
+                if not body["metadata"].get("claims"):
+                    issues.append("No claims linked to retrieved text")
                 db_evidence = None
             else:
                 db_evidence, analytics_issues = check_analytics(session, question, body)
@@ -161,6 +163,7 @@ def run(base_url, expected_index):
                     "grounding": (
                         "SQL over PostgreSQL" if body["route"] == "analytics" else "verified chunks"
                     ),
+                    "grounded_in_database": not issues,
                     "traceability_issues": issues,
                 }
             )
