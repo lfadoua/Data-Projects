@@ -4,10 +4,12 @@ import argparse
 import hashlib
 import logging
 import os
+import time
 from datetime import datetime, timezone
 
 import numpy as np
 from sqlalchemy import delete, insert, select, text
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from src.config.logging_config import configure_logging
@@ -53,6 +55,35 @@ def checkpointed_vectors(provider, batch, path):
     return array.tolist(), False
 
 
+def iter_jobs(engine, limit=None, page_size=100):
+    """Read descriptions in stable pages so a large remote result cannot drop SSL."""
+    last_id = None
+    loaded = 0
+    while limit is None or loaded < limit:
+        take = min(page_size, limit - loaded) if limit is not None else page_size
+        for attempt in range(4):
+            try:
+                with Session(engine) as session:
+                    query = select(Job).order_by(Job.id).limit(take)
+                    if last_id is not None:
+                        query = query.where(Job.id > last_id)
+                    page = list(session.scalars(query))
+                break
+            except OperationalError:
+                if attempt == 3:
+                    raise
+                log.warning("Job page read failed after %s; retrying", last_id)
+                time.sleep(2**attempt)
+        if not page:
+            return
+        for job in page:
+            yield job
+        loaded += len(page)
+        last_id = page[-1].id
+        if len(page) < take:
+            return
+
+
 def reindex(engine, limit=None, version="v1"):
     if version not in ("v1", "v2"):
         raise ValueError("Unsupported index version")
@@ -64,33 +95,28 @@ def reindex(engine, limit=None, version="v1"):
         if version == "v2"
         else (s.chunk_size, s.chunk_overlap)
     )
-    with Session(engine) as session:
-        query = select(Job).order_by(Job.id)
-        if limit:
-            query = query.limit(limit)
-        jobs = list(session.scalars(query))
-        records = []
-        for job in jobs:
-            for number, chunk in enumerate(chunk_text(job.cleaned_description, size, overlap)):
-                records.append(
-                    {
-                        "chunk_id": hashlib.sha256(
-                            f"{job.id}:{number}:{chunk}".encode()
-                        ).hexdigest(),
-                        "job_id": job.id,
-                        "chunk_index": number,
-                        "chunk_text": chunk,
-                        "job_title": job.job_title,
-                        "seniority": job.seniority,
-                        "country": job.country,
-                        "city": job.city,
-                        "company": job.company,
-                        "source_url": job.source_url,
-                    }
-                )
+    job_count = 0
+    records = []
+    for job in iter_jobs(engine, limit):
+        job_count += 1
+        for number, chunk in enumerate(chunk_text(job.cleaned_description, size, overlap)):
+            records.append(
+                {
+                    "chunk_id": hashlib.sha256(f"{job.id}:{number}:{chunk}".encode()).hexdigest(),
+                    "job_id": job.id,
+                    "chunk_index": number,
+                    "chunk_text": chunk,
+                    "job_title": job.job_title,
+                    "seniority": job.seniority,
+                    "country": job.country,
+                    "city": job.city,
+                    "company": job.company,
+                    "source_url": job.source_url,
+                }
+            )
     if not records:
         raise ValueError("No descriptions to index. Run preprocessing with --load first.")
-    log.info("Preparing %d chunks from %d jobs", len(records), len(jobs))
+    log.info("Preparing %d chunks from %d jobs", len(records), job_count)
     documents = [r["chunk_text"] for r in records]
     model_file = None
     if version == "v2":
@@ -132,7 +158,7 @@ def reindex(engine, limit=None, version="v1"):
         "space": provider.space,
         "model_file": model_file,
         "dimensions": provider.dimensions,
-        "jobs": len(jobs),
+        "jobs": job_count,
         "chunks": len(records),
         "partial": limit is not None,
         "version": version,

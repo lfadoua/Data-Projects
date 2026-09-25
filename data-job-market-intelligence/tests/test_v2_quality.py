@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from src.analytics.schemas import Filters
 from src.database.models import IndexState, JobChunkV2
 from src.prompts.query_rewrite import rewrite
+from src.rag.indexing import iter_jobs
 from src.rag.reranker import HybridReranker, select_distinct_jobs
 from src.rag.synthesis import evidence_quality, synthesize
 from src.routing.metadata import extract_metadata
@@ -17,6 +18,11 @@ def test_rewrite_preserves_role_and_intent():
     assert "Senior Data Engineer" in result
     assert "required skills qualifications" in result
     assert "France" not in result
+
+
+def test_index_job_pages_keep_stable_order_and_limit(engine):
+    assert [job.id for job in iter_jobs(engine, page_size=2)] == ["1", "2", "3", "4"]
+    assert [job.id for job in iter_jobs(engine, limit=3, page_size=2)] == ["1", "2", "3"]
 
 
 def test_metadata_does_not_invent_machine_learning_engineer():
