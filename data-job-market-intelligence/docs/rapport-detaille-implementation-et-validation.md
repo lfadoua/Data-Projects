@@ -1,5 +1,13 @@
 # Rapport détaillé — Data Job Market Intelligence
 
+## Actualisation du 5 octobre 2026 — connexion rétablie et reprise V2
+
+Après une interruption du processus d'indexation, les tentatives de connexion du 5 octobre ont renvoyé l'erreur Supabase `tenant/user not found`. Les paramètres du Session pooler affichés dans le tableau de bord correspondaient à la configuration locale. Un nouveau contrôle PostgreSQL a ensuite réussi : **12 217 offres présentes, zéro chunk V2 publié et aucune ligne `index_state` d'identifiant 2**. L'activation V2 reste donc à réaliser.
+
+Le contrôle des fichiers NumPy sauvegardés a confirmé **374 lots, soit 23 936 embeddings sur les 30 955 attendus**, chacun de dimension 384, sans lot de forme incorrecte ni valeur non finie. Le processus `python -m src.rag.indexing --v2` a été relancé avec ces checkpoints. Le helper local de prévention de veille a également été relancé pour la durée de ce calcul.
+
+Les contrôles locaux exécutés le 5 octobre donnent **58 tests réussis, 3 ignorés et 2 avertissements de dépendances** ; ces résultats n'incluent pas les tests PostgreSQL, qui doivent encore être exécutés dans la validation finale. `ruff check .` et `ruff format --check .` passent, avec 94 fichiers conformes au formatage. Les sections suivantes conservent les résultats historiques du 25 septembre ; elles ne constituent pas encore une validation finale V2.
+
 **État mesuré : 25 septembre 2026, 20 h 52 UTC.** Ce document décrit ce qui a été construit et vérifié dans le projet local. **La validation finale V2 n'est pas terminée** : les vecteurs V2 sont encore calculés, et leur publication atomique dans PostgreSQL n'a pas eu lieu. Les résultats ci-dessous sont donc explicitement séparés entre V1 validé, V2 préparé/en cours et contrôles restants. Les chiffres d'avancement sont un instantané, pas une promesse de résultat final.
 
 ## 1. Où se trouve le projet et comment lire son histoire
