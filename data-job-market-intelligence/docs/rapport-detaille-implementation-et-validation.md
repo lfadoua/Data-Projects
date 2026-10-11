@@ -1,20 +1,34 @@
 # Rapport détaillé — Data Job Market Intelligence
 
-## Actualisation du 5 octobre 2026 — connexion rétablie et reprise V2
+**Bilan final fonctionnel V2 — 11 octobre 2026.** Rapport assemblé à partir des contrôles réellement exécutés ; les dates précises des mesures sont enregistrées dans les JSON. Les horodatages techniques ci-dessous sont en UTC. La validation locale utilise PostgreSQL Supabase, FastAPI et Streamlit. **Les composants critiques fonctionnent avec V2. Docker reste partiellement validé**, car son exécutable est absent sur cet ordinateur. Aucun déploiement Docker effectif ni succès GitHub Actions hébergé n’est affirmé.
 
-Après une interruption du processus d'indexation, les tentatives de connexion du 5 octobre ont renvoyé l'erreur Supabase `tenant/user not found`. Les paramètres du Session pooler affichés dans le tableau de bord correspondaient à la configuration locale. Un nouveau contrôle PostgreSQL a ensuite réussi : **12 217 offres présentes, zéro chunk V2 publié et aucune ligne `index_state` d'identifiant 2**. L'activation V2 reste donc à réaliser.
+| Résultat final | Mesure vérifiée |
+| --- | --- |
+| Index de recherche actif | **V2**, `index_state.id=2`, version `v2`, `partial=false` |
+| Offres conservées | **12 217** |
+| Chunks V2 | **30 955** |
+| Embeddings pgvector V2 | **30 955**, dimension **384** |
+| Checkpoints comparés au stockage | **484 lots**, **30 955 vecteurs**, écart maximal **0,0** |
+| Couverture / intégrité | 12 217 jobs couverts, zéro chunk orphelin, zéro vecteur nul |
+| V1 conservé | 23 638 chunks / embeddings ; limite historique : deux vecteurs nuls |
+| Tests, PostgreSQL inclus | **61 réussis**, zéro échec, zéro ignoré, deux avertissements |
+| Tests PostgreSQL | **3 réussis**, inclus dans la suite complète |
+| Lint et format | Ruff passe ; 94 fichiers conformes |
+| API | **6 routes HTTP 200** |
+| Questions réelles | **10/10** routes et preuves vérifiées ; **25 sources**, **67 claims** cités vérifiés |
+| Interface | Trois pages vérifiées dans le navigateur sur V2 |
+| Docker | 16 contrôles statiques passent ; aucune exécution Compose locale |
+| Definition of Done | **19 critères validés, 1 partiellement validé, 0 manquant ou échoué** |
 
-Le contrôle des fichiers NumPy sauvegardés a confirmé **374 lots, soit 23 936 embeddings sur les 30 955 attendus**, chacun de dimension 384, sans lot de forme incorrecte ni valeur non finie. Le processus `python -m src.rag.indexing --v2` a été relancé avec ces checkpoints. Le helper local de prévention de veille a également été relancé pour la durée de ce calcul.
+**Dernier commit de code Python validé : `f216ba112eb8a5cc498de6e0f823ff8301ab942f`.** Le commit final de documentation est communiqué avec la livraison ; il ne modifie pas l’architecture.
 
-Les contrôles locaux exécutés le 5 octobre donnent **58 tests réussis, 3 ignorés et 2 avertissements de dépendances** ; ces résultats n'incluent pas les tests PostgreSQL, qui doivent encore être exécutés dans la validation finale. `ruff check .` et `ruff format --check .` passent, avec 94 fichiers conformes au formatage. Les sections suivantes conservent les résultats historiques du 25 septembre ; elles ne constituent pas encore une validation finale V2.
-
-**État mesuré : 25 septembre 2026, 20 h 52 UTC.** Ce document décrit ce qui a été construit et vérifié dans le projet local. **La validation finale V2 n'est pas terminée** : les vecteurs V2 sont encore calculés, et leur publication atomique dans PostgreSQL n'a pas eu lieu. Les résultats ci-dessous sont donc explicitement séparés entre V1 validé, V2 préparé/en cours et contrôles restants. Les chiffres d'avancement sont un instantané, pas une promesse de résultat final.
+Les résultats analytiques portent sur un instantané historique collecté en janvier 2024. Une réponse France = 0 signifie que cet échantillon ne contient pas d’offre correspondante ; elle ne décrit pas le marché français actuel.
 
 ## 1. Où se trouve le projet et comment lire son histoire
 
 - Racine Git : `C:\Users\HP\Documents\ChatGPT\Data Job Market Intelligence`.
 - Application : `C:\Users\HP\Documents\ChatGPT\Data Job Market Intelligence\data-job-market-intelligence`.
-- Code et documentation suivis par Git : 105 fichiers avant l'ajout du présent rapport.
+- Code et documentation suivis par Git : 106 fichiers lors de l’inspection finale.
 - Fichiers volumineux ou privés exclus de Git : environnement `.venv/`, configuration locale `.env`, CSV bruts, données traitées, modèles, checkpoints d'embeddings, journaux et résultats de validation JSON.
 - Le dossier voisin nommé **Data Job Market Intelligence Pipeline** est un ancien projet distinct. Ses chiffres de nettoyage ne doivent pas être substitués aux chiffres de la présente application. Ici, la base `djmi` contient 12 217 jobs.
 
@@ -32,8 +46,11 @@ Le premier commit Git de ce dépôt, `ee9b7c84aaec2da254ea7783ea9a96a9cbf7113d` 
 | 25/09 14 h 12 | `28eb3ef` | Vérification prévue de chaque vecteur V2 publié contre son checkpoint calculé. |
 | 25/09 14 h 14 | `8639d61` | Commandes reproductibles de validation dans `evaluation/README.md`. |
 | 25/09 20 h 38 | `f216ba1` | Lecture PostgreSQL paginée et reprise après coupure SSL pendant l'indexation. |
+| 25/09 | `8e01177` | Création du premier rapport détaillé, explicitement provisoire. |
+| 05/10 | `0be58a5` | Connexion PostgreSQL rétablie, reprise V2 et rapport actualisé. |
+| 11/10 15 h 25 min 48 s | Journal d’exécution | Activation complète des 30 955 chunks V2 dans PostgreSQL. |
 
-Le dernier commit de code vérifié au moment de cet instantané est `f216ba112eb8a5cc498de6e0f823ff8301ab942f`. Le hash changera si le présent rapport est commité, et pourra encore changer après les corrections éventuelles de la validation V2.
+Le dernier commit ayant modifié le code Python est `f216ba112eb8a5cc498de6e0f823ff8301ab942f`. Ce code a été validé avec V2 actif le 11 octobre. Les commits suivants portent sur la documentation ; le hash du commit final de livraison est donné dans le bilan de livraison et dans `evaluation/results/final-v2-release.json`.
 
 ## 3. Source des données et préparation
 
@@ -84,7 +101,7 @@ Mesures directement obtenues dans PostgreSQL à l'instantané :
 | Index HNSW cosinus V1 | Présent |
 | Vecteurs V1 de norme nulle | **2** |
 
-Le dernier point est une limite **mesurée**, et non masquée : deux embeddings LSA V1 n'ont pas de direction utilisable pour une similarité cosinus. Le rapport `evaluation/results/final-v1-index-audit.json` marque donc son contrôle global comme échoué sur ce critère, même si les comptes, dimensions et liens aux jobs passent. V2 vise à remplacer l'index de recherche actif tout en gardant V1 disponible pour revenir en arrière.
+Le dernier point est une limite **mesurée**, et non masquée : deux embeddings LSA V1 n'ont pas de direction utilisable pour une similarité cosinus. Le rapport `evaluation/results/final-v1-index-audit.json` marque donc son contrôle global comme échoué sur ce critère, même si les comptes, dimensions et liens aux jobs passent. V2 remplace désormais l'index de recherche actif ; V1 reste disponible pour revenir en arrière, avec cette limite connue.
 
 ## 5. Analyse SQL, routage et RAG
 
@@ -103,68 +120,158 @@ Le RAG se trouve dans `src/rag/` :
 
 Les modules `src/prompts/` encadrent le routage, la réécriture, l'extraction de métadonnées, la synthèse et la vérification. `src/llm/` contient les fournisseurs de génération optionnels. Le mode local par défaut est une **synthèse ancrée et non générative** ; il ne se présente pas comme une réponse LLM. Les fournisseurs OpenAI/Ollama optionnels n'ont pas fait l'objet d'un essai réel dans cette validation. Les descriptions d'emplois sont traitées comme des preuves non fiables : une citation doit renvoyer à une source récupérée et une citation textuelle doit apparaître dans le chunk correspondant. Cela prouve la traçabilité, mais pas automatiquement la justesse de toute paraphrase.
 
-## 6. FastAPI, Streamlit et interface créée
 
-`api/main.py`, `api/dependencies.py` et `api/routes/health.py` exposent l'application HTTP. Les six routes explicitement demandées ont déjà renvoyé **HTTP 200 avec V1 actif** : `GET /health`, `GET /api/analytics/overview`, `GET /api/analytics/skills`, `GET /api/analytics/jobs`, `POST /api/assistant/query` et `POST /api/rag/query`. Ce contrôle sera répété une fois V2 activé. Des routes supplémentaires fournissent filtres, matrice rôle-compétence, rapport qualité et réindexation protégée par jeton administrateur.
+## 6. FastAPI, Streamlit et contrôles de l’interface
 
-`app/Home.py` est l'accueil Streamlit. `app/pages/1_Market_Overview.py` présente les KPI, graphiques Plotly et la matrice rôle-compétence. `2_Job_Explorer.py` contient les filtres, les cartes d'annonces paginées, descriptions et liens source. `3_AI_Assistant.py` est l'interface de questions-réponses ; `app/components/design.py` et `ui.py` fournissent l'apparence et les composants communs.
+FastAPI possède la logique métier et Streamlit appelle ses endpoints HTTP. Les deux services ont été relancés après la publication de V2. Le `/health` indique `status=ok`, `database=connected`, `jobs=12217`, `chunks=30955`, `index_ready=true`.
 
-Vérification manuelle déjà effectuée dans le navigateur **sur V1** :
+| Route vérifiée | HTTP | Latence observée | Contrôle |
+| --- | ---: | ---: | --- |
+| `GET /health` | 200 | 0.434 s | 12 217 jobs, 30 955 chunks, index prêt |
+| `GET /api/analytics/overview` | 200 | 3.097 s | Réponse réelle de PostgreSQL |
+| `GET /api/analytics/skills` | 200 | 0.540 s | Réponse réelle de PostgreSQL |
+| `GET /api/analytics/jobs` | 200 | 0.698 s | Réponse réelle de PostgreSQL |
+| `POST /api/assistant/query` | 200 | 2.068 s | Route analytics, filtre Data Engineer / France, réponse 0 |
+| `POST /api/rag/query` | 200 | 7.678 s | Route RAG, index v2, sources/chunks PostgreSQL vérifiés |
 
-- **Market Overview** : graphiques et carte de chaleur chargés ; le filtre Canada a mis les KPI à 625 jobs et a changé les graphiques.
-- **Job Explorer** : 12 217 jobs sans filtre ; 625 avec Canada ; douze cartes paginées visibles ; une description réelle et le lien de l'annonce d'origine ont pu être ouverts.
-- **AI Assistant** : la question France a affiché la route `ANALYTICS` et la réponse `0`. Une question sur les responsabilités de Senior Data Engineers a affiché `RAG`, six annonces récupérées, les références `[S1]` à `[S6]`, un compteur de preuves, une qualité d'évidence et des extraits avec liens originaux.
-- Recherche statique de `placeholder`, `coming soon`, `lorem ipsum`, `fake response` et `TODO` dans les dossiers applicatifs : aucun contenu correspondant trouvé au moment du contrôle.
+### Vérification manuelle Streamlit sur V2
 
-Cette observation prouve que l'interface V1 fonctionne, **pas** encore que l'interface utilisera V2 après bascule. FastAPI et Streamlit ont été arrêtés temporairement pour libérer de la mémoire pendant le calcul V2 ; ils devront être relancés pour la validation finale.
+- **Market Overview** : KPI 12 217, graphiques de compétences/rôles/séniorité/localisation/mode de travail et matrice rôle-compétence chargés. Le filtre `Country=Canada` ramène le total à **625**, la première ville à Toronto et actualise les graphiques.
+- **Job Explorer** : 12 217 offres sans filtre, **625** avec Canada, douze cartes paginées, badges de compétences et liens originaux visibles. La description réelle de **Machine Learning Engineer — MobSquad** a été ouverte.
+- **AI Assistant / analytics** : question exacte sur Data Engineer en France, réponse **0** et badge **ANALYTICS** visibles.
+- **AI Assistant / RAG** : question exacte sur Senior Data Engineers, badge **RAG**, réponse citée `[S1]` à `[S6]`, compteur **6 retrieved job postings**, label d’évidence et six sources affichés. La première source a été ouverte : extrait réel et lien original visibles. Les détails techniques indiquent `fastembed-bge-small-en-v1.5-384`, les filtres Data Engineer / Senior, les vrais IDs des chunks et le reclassement `cross_encoder`.
+- **Contenu provisoire** : aucun placeholder de contenu constaté sur ces pages ; l’inspection statique des dossiers `app`, `api`, `src` ne trouve aucun `TODO`, `lorem ipsum`, `coming soon`, `fake response` ou `placeholder`. Le texte indicatif normal du champ de saisie est une aide de l’interface.
 
-## 7. V2 : conception, calcul et état réel
+Preuves locales :
 
-V2 utilise le modèle local `BAAI/bge-small-en-v1.5` via FastEmbed/ONNX. Les chunks sont ciblés à 320 mots avec 40 mots de chevauchement et les embeddings à 384 dimensions. Le calcul se fait avant une transaction unique qui doit insérer les lignes de `job_chunks_v2` et créer `index_state` ligne 2. Tant que cette transaction n'a pas réussi, l'API continue à utiliser V1. Le modèle, le texte des chunks et la taille des lots entrent dans l'identité des checkpoints ; une reprise n'utilise donc pas silencieusement des lots incompatibles.
+![Market Overview filtré sur Canada](../evaluation/results/ui-v2/market-overview-canada.png)
 
-L'indexation complète a déterminé **30 955 chunks pour 12 217 jobs**. Ce nombre est confirmé par plusieurs reprises de la préparation ; ce n'est **pas encore** un compte V2 publié dans pgvector. Au point de mesure de 20 h 52 UTC :
+![Réponse RAG, citations et compteur de preuves](../evaluation/results/ui-v2/assistant-rag-v2.png)
 
-| Élément V2 | Mesure |
-| --- | ---: |
-| Chunks attendus après découpage | 30 955 |
-| Lots `.npy` complets sauvegardés | 233 |
-| Vecteurs V2 sauvegardés dans ces lots | 14 912 |
-| Chunks V2 présents dans PostgreSQL | **0** |
-| Embeddings V2 présents dans pgvector | **0** |
-| Ligne `index_state` V2 | **Absente** |
-| Index actif vérifié | **V1** |
+Le bilan manuel et les autres captures sont dans `evaluation/results/ui-v2/`. La vérification couvre les interactions décrites ; elle n’est pas un test exhaustif de toutes les combinaisons de filtres.
 
-Un contrôle intermédiaire sur 5 888 vecteurs sauvegardés a trouvé des tableaux 384 dimensions contigus, finis, sans norme nulle et de norme proche de 1. Il ne constitue pas la vérification des 30 955 vecteurs ni de leur stockage final. Le processus V2 était actif lors de l'instantané ; le compteur local peut continuer à augmenter.
+## 7. V2 : calcul, activation et pgvector
 
-Le calcul a été interrompu par une mise en veille Windows le 25 septembre (journal système : sommeil de 14 h 38 à 20 h 23 UTC). Après le réveil, deux tentatives de lecture de **toutes** les descriptions en une seule requête ont échoué avec une connexion SSL PostgreSQL fermée. Le correctif `f216ba1` lit désormais les jobs par pages ordonnées et réessaie une page en cas de coupure. Le nouvel indexeur a relu les 12 217 jobs, reproduit les mêmes 30 955 chunks et réutilisé les checkpoints, sans modifier les données ni l'architecture V1/V2. Un petit processus local, non suivi par Git, demande temporairement à Windows d'éviter la veille automatique **seulement tant que l'indexeur actuel tourne** ; il libère cette demande quand l'indexeur sort. Une veille volontaire ou l'arrêt de l'ordinateur reste hors du contrôle de l'application.
+Le modèle local est `BAAI/bge-small-en-v1.5` via FastEmbed/ONNX ; la dimension est 384. Les descriptions sont découpées par phrases, avec une cible de 320 mots et un chevauchement de 40 mots. Le contenu, le modèle et les paramètres déterminent l’identité des checkpoints. L’indexeur réutilise uniquement des lots compatibles, finis et de la forme attendue.
 
-## 8. Dix questions réelles : résultats V1 mesurés
+Le calcul a connu des interruptions. Le 25 septembre, une veille Windows et des erreurs SSL sur une grande lecture ont conduit au correctif de pagination `f216ba1`. Le 5 octobre, Supabase renvoyait `tenant/user not found` ; les paramètres affichés dans le tableau de bord correspondaient au fichier local, et une nouvelle connexion a ensuite retrouvé les 12 217 offres. La reprise a réutilisé 23 936 vecteurs. Le 11 octobre, l’indexeur arrêté a été relancé, a réutilisé **26 816** vecteurs, puis a terminé les **30 955**. Le journal confirme **Index activated: 30955 chunks** le **11 octobre 2026 à 15:25:48 UTC**.
 
-Les dix questions exactes de la demande finale ont été envoyées par HTTP à `/api/assistant/query` avec V1 actif. `evaluation/final_validation.py` a enregistré les filtres, routes, réponses, documents récupérés, sources et latences dans `evaluation/results/final-v1-baseline.json`. Les cinq réponses d'analytics ont été comparées avec des requêtes SQL indépendantes ; chaque source et citation RAG a été reliée au job/chunk PostgreSQL et ses extraits vérifiés. **Aucun écart de route, SQL ou traçabilité n'a été trouvé sur ce lot V1.** Les latences incluent la charge de calcul V2 présente lors de la mesure et ne sont pas un benchmark matériel isolé.
+Une transaction unique publie les chunks V2 et la ligne d’état 2. Les tables de jobs et de V1 sont conservées. Le helper local non suivi `keep-awake-v2.py` empêchait temporairement la veille automatique pendant l’indexation et libère sa demande lorsque le processus sort.
 
-| Question | Route, filtres extraits | Réponse mesurée, résumée sans changer les chiffres | Documents / sources | Latence HTTP | Ancrage vérifié |
-| --- | --- | --- | --- | ---: | --- |
-| How many Data Engineer jobs are in France? | analytics ; `job_title=Data Engineer`, `country=France` | 0 job dans cet instantané. | SQL ; sans source RAG | 4,325 s | Oui, compte SQL indépendant. |
-| What are the top 10 most requested skills? | analytics ; aucun filtre | SQL 5 592 ; Python 5 121 ; Machine Learning 3 324 ; AWS 2 816 ; Azure 2 156 ; Spark 2 076 ; Excel 1 956 ; Tableau 1 828 ; Power BI 1 664 ; GCP 1 466. | SQL ; sans source RAG | 3,916 s | Oui, classement SQL indépendant. |
-| What percentage of jobs mention Python? | analytics ; `skill=Python` | 5 121 / 12 217, soit 41,92 %. | SQL ; sans source RAG | 3,774 s | Oui, numérateur et dénominateur SQL. |
-| Which cities contain the most job postings? | analytics ; aucun filtre | New York 357 ; London 239 ; Chicago 232 ; San Francisco 199 ; Washington 184 ; 296 villes inconnues. | SQL ; sans source RAG | 3,452 s | Oui, regroupement SQL indépendant. |
-| What is the distribution of seniority levels? | analytics ; aucun filtre | Mid/Senior (source) 4 769 ; Lead 3 015 ; Senior 2 985 ; Unspecified 927 ; Junior 335 ; Executive 153 ; Intern 33. | SQL ; sans source RAG | 3,103 s | Oui, regroupement SQL indépendant. |
-| What responsibilities are expected from Senior Data Engineers? | RAG ; `job_title=Data Engineer`, `seniority=Senior` | Pipelines/ingestion, SQL-modélisation-entrepôt, infrastructure cloud dans les annonces retenues. | 6 jobs ; `S1`–`S6` | 15,165 s | Oui, sources et citations V1 vérifiées. |
-| What skills are commonly associated with Kubernetes? | RAG ; `skill=Kubernetes` | Parmi les six annonces récupérées : AWS 4, Docker 4, SQL 4, Azure 3, Python 3. Ce ne sont pas des fréquences du marché entier. | 6 jobs ; `S1`–`S6` | 15,078 s | Oui, sources et citations V1 vérifiées. |
-| What AWS-related responsibilities appear in Data Engineer roles? | RAG ; `job_title=Data Engineer`, `skill=AWS` | Pipelines/ingestion et infrastructure/déploiement cloud dans des phrases où AWS apparaît avec la responsabilité. | 6 jobs ; `S1`–`S6` | 9,643 s | Oui, extraits AWS et sources V1 vérifiés. |
-| What are common requirements for Machine Learning Engineer positions? | RAG ; `job_title=Machine Learning Engineer`, `skill=Machine Learning` | Dans six annonces sélectionnées : Machine Learning 6, Python 5, Deep Learning 4, PyTorch 3, TensorFlow 3 ; des responsabilités pipelines/cloud sont aussi citées. | 6 jobs ; `S1`–`S6` | 10,368 s | Oui, sources et citations V1 vérifiées. |
-| What responsibilities appear in remote Data Analyst roles? | RAG ; `job_title=Data Analyst`, `workplace_type=Remote` | Une seule annonce pertinente sélectionnée soutient un thème fiabilité/surveillance/qualité. Généralisation limitée. | 1 job ; `S1` | 6,646 s | Oui pour cet extrait V1 ; preuve limitée. |
+| Contrôle V2 dans PostgreSQL | Résultat |
+| --- | --- |
+| Jobs | 12217 |
+| Chunks | 30955 |
+| Embeddings | 30955 |
+| Jobs ayant des chunks | 12217 |
+| Chunks orphelins | 0 |
+| Vecteurs de norme nulle | 0 |
+| Dimension | 384 |
+| Extension pgvector | 0.8.2 |
+| Index HNSW cosinus V2 | True |
+| Norme minimale | 0.999999793984225 |
+| Norme maximale | 1.00000022091416 |
+| Audit global | True |
+| Lots comparés au stockage | 484 |
+| Vecteurs comparés au stockage | 30955 |
+| Écart maximal de composante | 0.0 |
 
-Les identifiants `S1` à `S6` sont locaux à chaque réponse et **ne sont pas des identifiants de jobs globaux**. Le JSON de validation contient pour chacun l'ID de job, l'URL originale, l'extrait et les claims. L'inspection montre que chaque référence RAG de ces dix tests V1 correspond à un vrai enregistrement ou chunk PostgreSQL. Il n'existe pas encore de tableau analogue V2 : **aucun score ni gain de V2 n'est inventé ici**.
+**V2 est réellement utilisé.** Toutes les réponses RAG du lot de dix questions déclarent V2 ; tous leurs chunks et citations ont été vérifiés contre `job_chunks_v2` et `jobs`. Le retriever préfère la ligne d’état 2 lorsqu’elle existe. Un `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)` de la recherche cosinus non filtrée, avec un vecteur V2 sauvegardé, a mesuré une utilisation de **`ix_chunks_v2_embedding_cosine` sur `job_chunks_v2`** : 20 lignes retournées, temps d’exécution PostgreSQL **820,537 ms** pour cette requête précise. Ce temps SQL n’est pas la latence HTTP de l’assistant.
 
-## 9. Tests, lint, secrets, Docker et CI
+Les recherches avec filtres de métadonnées utilisent volontairement un classement cosinus exact sur le sous-ensemble filtré, pour éviter la perte de résultats d’un index approximatif sur une petite sélection. Elles interrogent toujours la table V2. Le plan SQL enregistré ne prétend donc pas que toutes les questions filtrées utilisent le HNSW.
 
-- Suite complète exécutée avant le dernier correctif de pagination, avec `RUN_DB_INTEGRATION=1` : **59 tests réussis, 1 test V2 reporté**, deux avertissements de dépréciation de dépendances. Ce test V2 est reporté parce que l'index n'est pas actif, pas déclaré réussi.
-- Après le correctif de lecture paginée, `tests/test_v2_quality.py` : **9 tests réussis**. Il couvre notamment l'ordre et la limite des pages, la qualité de synthèse et les garde-fous V2. La suite complète sera **relancée sur le code actuel une fois V2 actif**.
-- Dernier lint sur le code actuel : `ruff check .` réussi ; `ruff format --check .` réussi pour **93 fichiers**.
-- Inspection des secrets enregistrée dans `evaluation/results/secrets-inspection.json` : **104 fichiers Git suivis** au moment du scan, zéro motif sensible trouvé et `.env` non suivi. Ce scan doit être répété après le dernier commit, car le nombre de fichiers a augmenté depuis.
-- Docker : exécutable indisponible sur cet ordinateur. Seize vérifications **statiques** de `docker-compose.yml`, Dockerfiles, dépendances, ports locaux, volumes, santé des services et présence de la configuration ont réussi. **Non exécutés** : `docker compose config`, `docker compose up --build`, construction locale des images et démarrage effectif des quatre services.
-- CI : le fichier parent `.github/workflows/ci.yml` existe ; il installe les dépendances, lance Ruff/pytest, vérifie Compose et construit les images dans GitHub Actions. Aucun résultat d'exécution hébergée n'a été confirmé ici.
+## 8. Les dix questions exactes : résultats finaux V2
+
+Mesure HTTP commencée le `2026-10-11T16:11:00.613823+00:00`. Chaque question est passée par `POST /api/assistant/query`. Les cinq réponses analytics ont été réconciliées avec des requêtes SQL indépendantes. Les cinq réponses RAG utilisent V2 ; leurs sources, liens, IDs de jobs, IDs de chunks et citations textuelles ont été vérifiés dans PostgreSQL. **Dix réponses ancrées, zéro problème de route, SQL ou traçabilité.**
+
+| Nº | Question | Route / filtres extraits | Réponse exacte enregistrée | Documents / IDs de sources | Latence HTTP | Ancrage |
+| ---: | --- | --- | --- | --- | ---: | --- |
+| 1 | How many Data Engineer jobs are in France? | `analytics` ; `{"job_title": "Data Engineer", "country": "France"}` | 0 postings in this historical dataset match Data Engineer, France. | SQL ; aucune source RAG | 2.209 s | Oui — SQL over PostgreSQL |
+| 2 | What are the top 10 most requested skills? | `analytics` ; `{}` | Most requested skills in this historical dataset: SQL (5,592); Python (5,121); Machine Learning (3,324); AWS (2,816); Azure (2,156); Spark (2,076); Excel (1,956); Tableau (1,828); Power BI (1,664); GCP (1,466). Each job counts once per skill. | SQL ; aucune source RAG | 2.389 s | Oui — SQL over PostgreSQL |
+| 3 | What percentage of jobs mention Python? | `analytics` ; `{"skill": "Python"}` | 5,121 of 12,217 matching jobs (41.92%) mention Python. | SQL ; aucune source RAG | 2.443 s | Oui — SQL over PostgreSQL |
+| 4 | Which cities contain the most job postings? | `analytics` ; `{}` | Top recorded cities among all roles and locations: New York (357); London (239); Chicago (232); San Francisco (199); Washington (184). 296 postings are unknown. | SQL ; aucune source RAG | 2.077 s | Oui — SQL over PostgreSQL |
+| 5 | What is the distribution of seniority levels? | `analytics` ; `{}` | Distribution of seniority values among all roles and locations: Mid/Senior (source) (4,769); Lead (3,015); Senior (2,985); Unspecified (927); Junior (335); Executive (153); Intern (33). | SQL ; aucune source RAG | 2.101 s | Oui — SQL over PostgreSQL |
+| 6 | What responsibilities are expected from Senior Data Engineers? | `rag` ; `{"job_title": "Data Engineer", "seniority": "Senior"}` | The selected postings describe these responsibilities:<br><br>• Data pipelines or ingestion [S1], [S2], [S5], [S6]<br>• SQL, data modeling, or warehousing [S1], [S2], [S4], [S5], [S6]<br>• Cloud infrastructure or deployment [S1], [S2], [S3], [S5], [S6]<br><br>These are observations from the selected postings, not market-wide frequencies. | 6 jobs / 6 chunks ; S1, S2, S3, S4, S5, S6 | 9.552 s | Oui — verified chunks |
+| 7 | What skills are commonly associated with Kubernetes? | `rag` ; `{"skill": "Kubernetes"}` | In the retrieved postings that mention Kubernetes, these other tracked technologies appear:<br><br>• Docker — present in 4 selected posting(s) [S3], [S4], [S5], [S6]<br>• AWS — present in 3 selected posting(s) [S1], [S3], [S4]<br>• Azure — present in 3 selected posting(s) [S2], [S3], [S4]<br>• Machine Learning — present in 3 selected posting(s) [S3], [S5], [S6]<br>• Python — present in 3 selected posting(s) [S3], [S5], [S6]<br><br>These are observations from the selected postings, not market-wide frequencies. | 6 jobs / 6 chunks ; S1, S2, S3, S4, S5, S6 | 7.439 s | Oui — verified chunks |
+| 8 | What AWS-related responsibilities appear in Data Engineer roles? | `rag` ; `{"job_title": "Data Engineer", "skill": "AWS"}` | In the selected postings, AWS appears in responsibilities involving:<br><br>• SQL, data modeling, or warehousing [S1], [S3], [S6]<br>• Cloud infrastructure or deployment [S1], [S2], [S3], [S4], [S5], [S6]<br><br>These are observations from the selected postings, not market-wide frequencies. | 6 jobs / 6 chunks ; S1, S2, S3, S4, S5, S6 | 8.718 s | Oui — verified chunks |
+| 9 | What are common requirements for Machine Learning Engineer positions? | `rag` ; `{"job_title": "Machine Learning Engineer", "skill": "Machine Learning"}` | Across the retrieved postings, these tracked skills appear:<br><br>• Machine Learning — present in 6 selected posting(s) [S1], [S2], [S3], [S4], [S5], [S6]<br>• Python — present in 4 selected posting(s) [S3], [S4], [S5], [S6]<br>• TensorFlow — present in 3 selected posting(s) [S3], [S5], [S6]<br>• AWS — present in 2 selected posting(s) [S3], [S4]<br>• Deep Learning — present in 2 selected posting(s) [S1], [S3]<br>• Data pipelines or ingestion [S2], [S3], [S4]<br>• Cloud infrastructure or deployment [S3], [S4], [S6]<br><br>These are observations from the selected postings, not market-wide frequencies. | 6 jobs / 6 chunks ; S1, S2, S3, S4, S5, S6 | 8.243 s | Oui — verified chunks |
+| 10 | What responsibilities appear in remote Data Analyst roles? | `rag` ; `{"job_title": "Data Analyst", "workplace_type": "Remote"}` | The selected postings describe these responsibilities:<br><br>• Reliability, monitoring, or quality [S1]<br><br>These are observations from the selected postings, not market-wide frequencies. | 1 jobs / 1 chunks ; S1 | 3.186 s | Oui — verified chunks |
+
+### Correspondance précise des sources RAG avec les jobs
+
+Les IDs `S1` à `S6` sont locaux à chaque réponse. Le même libellé S1 dans deux questions ne représente pas le même job. Les IDs PostgreSQL ci-dessous sont les identités stables des enregistrements. Les URLs sont les liens de la source conservés en base ; la disponibilité actuelle de la page LinkedIn externe n’a pas été testée.
+
+#### Question 6 — What responsibilities are expected from Senior Data Engineers?
+
+Qualité d’évidence affichée : **Strong evidence**. 14 claims avec citations textuelles vérifiées. Réponse fondée sur 6 jobs sélectionnés, sans extrapolation de leurs fréquences à tout le marché.
+
+| Source locale | ID de job PostgreSQL | Titre / entreprise | Lien original |
+| --- | --- | --- | --- |
+| S1 | `fe62ee62d0f9756ad8242a141dccecd1` | Sr. Data Engineer — Latitude Inc | [Annonce source](https://www.linkedin.com/jobs/view/sr-data-engineer-at-latitude-inc-3787730196) |
+| S2 | `316531af66c6bfc865f735921cb7e1b6` | Senior Data Engineer — Ascendo Resources | [Annonce source](https://www.linkedin.com/jobs/view/senior-data-engineer-at-ascendo-resources-3792135667) |
+| S3 | `fdb4382efaff3190f134df501f3031dc` | Senior Data Engineer, Enterprise Data and Analytics — First Command Financial Services, Inc. | [Annonce source](https://www.linkedin.com/jobs/view/senior-data-engineer-enterprise-data-and-analytics-at-first-command-financial-services-inc-3773358880) |
+| S4 | `9f1444d8d6b654045ad5bf7072a86753` | Senior Data Engineer — Kforce Inc | [Annonce source](https://www.linkedin.com/jobs/view/senior-data-engineer-at-kforce-inc-3800584417) |
+| S5 | `7bc62b9b5cba5f6eab724bafe292aff1` | Sr. Data Engineer — Tential Solutions | [Annonce source](https://www.linkedin.com/jobs/view/sr-data-engineer-at-tential-solutions-3783160018) |
+| S6 | `03990263a15693671d8eae8364b3723c` | Senior Data Engineer — Kforce Inc | [Annonce source](https://www.linkedin.com/jobs/view/senior-data-engineer-at-kforce-inc-3796399527) |
+
+#### Question 7 — What skills are commonly associated with Kubernetes?
+
+Qualité d’évidence affichée : **Strong evidence**. 16 claims avec citations textuelles vérifiées. Réponse fondée sur 6 jobs sélectionnés, sans extrapolation de leurs fréquences à tout le marché.
+
+| Source locale | ID de job PostgreSQL | Titre / entreprise | Lien original |
+| --- | --- | --- | --- |
+| S1 | `90147700107ba03b43fd3ca8811ad09c` | Data Engineer — Merit321, Launching Careers | [Annonce source](https://www.linkedin.com/jobs/view/data-engineer-at-merit321-launching-careers-3713419751) |
+| S2 | `8de45b6a6c5cdf148f1cc536b69d1fe4` | Staff, Software Engineer - Big Data — Walmart | [Annonce source](https://www.linkedin.com/jobs/view/staff-software-engineer-big-data-at-walmart-3791513877) |
+| S3 | `e79f627e0294e4471bd76784ab8b4ef4` | Data Scientist — Apex Systems | [Annonce source](https://www.linkedin.com/jobs/view/data-scientist-at-apex-systems-3803344385) |
+| S4 | `b8fd1610a5dd6db18a3fef34bfab8809` | Lead Data Engineer — Jarvis Consulting Group | [Annonce source](https://www.linkedin.com/jobs/view/lead-data-engineer-at-jarvis-consulting-group-3772374932) |
+| S5 | `57552675af801c496fa78b49a0ba5bf5` | Senior Backend and Cloud Engineer - Machine Learning Infrastructure (Python) — Scandit | [Annonce source](https://uk.linkedin.com/jobs/view/senior-backend-and-cloud-engineer-machine-learning-infrastructure-python-at-scandit-3779591028) |
+| S6 | `712aacb4cfa41e3d6e6c8a88ad8cb7af` | Senior Backend and Cloud Engineer - Machine Learning Infrastructure (Python) — Scandit | [Annonce source](https://uk.linkedin.com/jobs/view/senior-backend-and-cloud-engineer-machine-learning-infrastructure-python-at-scandit-3779590087) |
+
+#### Question 8 — What AWS-related responsibilities appear in Data Engineer roles?
+
+Qualité d’évidence affichée : **Strong evidence**. 9 claims avec citations textuelles vérifiées. Réponse fondée sur 6 jobs sélectionnés, sans extrapolation de leurs fréquences à tout le marché.
+
+| Source locale | ID de job PostgreSQL | Titre / entreprise | Lien original |
+| --- | --- | --- | --- |
+| S1 | `efdaef0fd9ef49fecf375e50c11467e8` | Data Engineer — NR Consulting | [Annonce source](https://www.linkedin.com/jobs/view/data-engineer-at-nr-consulting-3768019176) |
+| S2 | `e448a4c390e607aa590a163bc885a267` | AWS DATA ENGINEER \| BEAVERTON, OR – HYBRID \| Industry: Retail / Wholesale — Vodastra Technologies | [Annonce source](https://www.linkedin.com/jobs/view/aws-data-engineer-beaverton-or-%E2%80%93-hybrid-industry-retail-wholesale-at-vodastra-technologies-3787735460) |
+| S3 | `40abd6a020f7bec2142877dcfb78fc4a` | Data Engineer (AWS, Python, Apache Spark, Jenkins/Terraform, SQL, Agile) — Diversity Nexus | [Annonce source](https://www.linkedin.com/jobs/view/data-engineer-aws-python-apache-spark-jenkins-terraform-sql-agile-at-diversity-nexus-3800557593) |
+| S4 | `8267b8c4c4251f07dc21d6b2c71bb305` | Data Engineer — QinetiQ US | [Annonce source](https://www.linkedin.com/jobs/view/data-engineer-at-qinetiq-us-3799970634) |
+| S5 | `c820f117423345b275903ca85a6a36bc` | Data Engineer — Robert Half | [Annonce source](https://www.linkedin.com/jobs/view/data-engineer-at-robert-half-3797531408) |
+| S6 | `7bc6a80f6f19f9193b4722b2ddc29d96` | Senior AWS Data Engineer - 6-Month Contract — Hour Consulting | [Annonce source](https://ca.linkedin.com/jobs/view/senior-aws-data-engineer-6-month-contract-at-hour-consulting-3770141485) |
+
+#### Question 9 — What are common requirements for Machine Learning Engineer positions?
+
+Qualité d’évidence affichée : **Strong evidence**. 27 claims avec citations textuelles vérifiées. Réponse fondée sur 6 jobs sélectionnés, sans extrapolation de leurs fréquences à tout le marché.
+
+| Source locale | ID de job PostgreSQL | Titre / entreprise | Lien original |
+| --- | --- | --- | --- |
+| S1 | `cdae132709cc81e8f3804b7102dd9dfa` | Senior Machine Learning Engineer — Lirio | [Annonce source](https://www.linkedin.com/jobs/view/senior-machine-learning-engineer-at-lirio-3770480493) |
+| S2 | `237662fc11276bbbe2940cc011199750` | Machine Learning Engineer — Brooksource | [Annonce source](https://www.linkedin.com/jobs/view/machine-learning-engineer-at-brooksource-3794037620) |
+| S3 | `2b04010c6813ae0127a5a02c15049310` | Machine Learning Engineer — HummingBirds Consulting LLC - now doing Business as HummingBirds Innovation | [Annonce source](https://www.linkedin.com/jobs/view/machine-learning-engineer-at-hummingbirds-consulting-llc-now-doing-business-as-hummingbirds-innovation-3799484968) |
+| S4 | `a662eabb9dc2d5ca103fa8db73d84603` | Machine Learning Engineer — InfoVision Inc. | [Annonce source](https://www.linkedin.com/jobs/view/machine-learning-engineer-at-infovision-inc-3798657627) |
+| S5 | `b99c6a9fd982119cc262a113f72d2fcf` | Senior Full-Stack Machine Learning Engineer- OPTIX — GA-CCRi | [Annonce source](https://www.linkedin.com/jobs/view/senior-full-stack-machine-learning-engineer-optix-at-ga-ccri-3657308448) |
+| S6 | `2b0b65fa03f791c5162d47e1b8b6c23f` | Machine Learning (Advanced) — microTECH Global LTD | [Annonce source](https://uk.linkedin.com/jobs/view/machine-learning-advanced-at-microtech-global-ltd-3792282264) |
+
+#### Question 10 — What responsibilities appear in remote Data Analyst roles?
+
+Qualité d’évidence affichée : **Limited evidence**. 1 claims avec citations textuelles vérifiées. Réponse fondée sur 1 jobs sélectionnés, sans extrapolation de leurs fréquences à tout le marché.
+
+| Source locale | ID de job PostgreSQL | Titre / entreprise | Lien original |
+| --- | --- | --- | --- |
+| S1 | `322135f6e2a8de0759a992a2e64321f8` | Medical Data Analyst (Medical Coder) (Remote) — NewYork-Presbyterian Hospital | [Annonce source](https://www.linkedin.com/jobs/view/medical-data-analyst-medical-coder-remote-at-newyork-presbyterian-hospital-3772287984) |
+
+La question sur les Data Analysts à distance ne fournit qu’**un job** et porte le label **Limited evidence**. Ce résultat ne permet pas de généraliser les responsabilités de tous les Data Analysts à distance. La synthèse locale reprend les catégories présentes dans les preuves ; elle ne constitue pas une évaluation humaine exhaustive de la justesse de chaque formulation.
+
+## 9. Tests, lint, inspection des secrets, Docker et CI
+
+- **Suite complète** : `RUN_DB_INTEGRATION=1 pytest -q` → **61 passed**, zéro échec, zéro test ignoré, **44,04 s**, deux avertissements de dépréciation FastAPI/Starlette/AnyIO.
+- **PostgreSQL** : les trois tests `test_postgresql_vector_and_source_linkage`, `test_live_api_counts_and_real_citations`, `test_v2_index_is_complete_when_active` passent dans cette suite. Le dernier n’est plus ignoré : V2 est actif et complet.
+- **Ruff** : `ruff check .` passe ; `ruff format --check .` passe avec **94 files already formatted**.
+- **Traçabilité** : **25 références de sources**, **25 jobs cités distincts**, **67 claims** et leurs citations vérifiés sur les cinq questions RAG. Le POST direct `/api/rag/query` a aussi été vérifié : six sources réelles, zéro problème.
+- **Secrets** : inspection de tous les fichiers suivis et de l’historique Git, recherche de motifs de clés privées/tokens/identifiants dans les URLs et comparaison avec les valeurs sensibles du `.env` local. Zéro résultat confirmé ; `.env` est ignoré et n’a pas été versionné. Le résultat exact et le commit scanné sont enregistrés dans `evaluation/results/secrets-inspection.json`. Cette inspection est une vérification par motifs et comparaison de valeurs, pas une preuve mathématique d’absence de tout secret possible.
+- **Docker** : YAML Compose parsé ; validation JSON Schema réussie contre le [schéma officiel Compose](https://raw.githubusercontent.com/compose-spec/compose-spec/main/schema/compose-spec.json), dont une copie et le SHA-256 sont conservés avec les résultats ; **16 contrôles statiques passent** (quatre services, image pgvector, volumes, dépendances de santé, bootstrap, Dockerfiles, ports locaux, mot de passe local configuré, étapes CI). L’exécutable Docker est absent. **Non exécutés** : `docker compose config`, `docker compose up --build`, construction locale des images, démarrage effectif des services Compose et test HTTP dans les conteneurs.
+- **CI** : `.github/workflows/ci.yml` existe dans la racine Git parente, installe les dépendances, lance Ruff/pytest, valide Compose et construit les images. Aucun lancement GitHub Actions hébergé n’a été observé dans cette validation.
 
 ## 10. Répertoire : quels fichiers ont été créés et à quoi ils servent
 
@@ -193,42 +300,93 @@ Le tableau liste les fichiers fonctionnels et d'évaluation ; les fichiers `__in
 
 Les fichiers créés **pendant l'exécution**, et non dans Git, sont notamment `data/processed/jobs.jsonl`, `data/processed/quality_report.json`, le modèle LSA V1, les modèles FastEmbed, les lots `data/models/v2-checkpoints/.../batch-*.npy`, les journaux d'indexation et `evaluation/results/*.json`. Le petit `data/models/keep-awake-v2.py` est lui aussi local/ignoré : il n'appartient pas à l'architecture de l'application et disparaîtra avec les fichiers de travail locaux.
 
-## 11. Définition de terminé : 20 critères, état provisoire
 
-Les libellés de statut ci-dessous sont ceux demandés pour l'évaluation finale. Le tableau est **provisoire** tant que V2 n'est pas actif ; il ne vaut pas acceptation finale du projet.
+## 11. Definition of Done — les vingt critères originaux
 
-| Nº | Critère original | Statut provisoire | Preuve ou manque |
+Les critères sont repris dans leur ordre et leur formulation d’origine. Les statuts utilisent exactement les trois libellés demandés. Le périmètre des preuves est la validation locale du 11 octobre 2026, complétée par les artefacts de préparation déjà produits.
+
+| Nº | Critère original | Statut final | Preuve / limite |
 | ---: | --- | --- | --- |
-| 1 | Prétraitement opérationnel | ✅ implemented and validated | Trois CSV lus ; 12 217 jobs traités ; rapport qualité généré. |
-| 2 | Stockage des données traitées dans PostgreSQL | ✅ implemented and validated | 12 217 lignes `jobs` interrogées. |
-| 3 | Descriptions découpées en chunks | ⚠️ implemented but not fully validated | 23 638 V1 présents ; 30 955 V2 préparés mais non publiés. |
-| 4 | Embeddings créés | ⚠️ implemented but not fully validated | 23 638 V1 ; V2 encore en calcul. |
-| 5 | Embeddings stockés dans pgvector | ⚠️ implemented but not fully validated | V1 stocké ; V2 = 0 ligne publiée. |
-| 6 | Recherche sémantique | ⚠️ implemented but not fully validated | V1 testé ; V2 actif non testé. |
-| 7 | Filtrage par métadonnées | ⚠️ implemented but not fully validated | V1 et filtres UI vérifiés ; reprise V2 à contrôler. |
-| 8 | Analytics | ✅ implemented and validated | Cinq questions SQL réconciliées indépendamment. |
-| 9 | Routage analytics/RAG | ⚠️ implemented but not fully validated | Dix routes V1 correctes ; réexécution V2 en attente. |
-| 10 | RAG fondé sur des preuves | ⚠️ implemented but not fully validated | Claims V1 reliés aux chunks ; V2 en attente. |
-| 11 | Sources retournées | ⚠️ implemented but not fully validated | Sources V1 réelles ; sources V2 à vérifier. |
-| 12 | Endpoints FastAPI réels | ⚠️ implemented but not fully validated | Six routes HTTP 200 sur V1 ; test V2 en attente. |
-| 13 | Streamlit appelle les endpoints | ⚠️ implemented but not fully validated | Interface V1 inspectée ; interface V2 à reprendre. |
-| 14 | Configuration Docker utilisable | ⚠️ implemented but not fully validated | 16 contrôles statiques ; Docker absent, aucune exécution Compose. |
-| 15 | Tests significatifs | ✅ implemented and validated | Suite réelle et tests ciblés exécutés ; le résultat final V2 viendra en plus. |
-| 16 | CI présente | ✅ implemented and validated | Workflow GitHub Actions présent ; exécution hébergée non observée. |
-| 17 | README décrit l'implémentation réelle | ✅ implemented and validated | Commandes, architecture, limites et sécurité documentées. |
-| 18 | Aucun secret commité | ⚠️ implemented but not fully validated | Scan de 104 fichiers négatif ; à répéter après le commit final. |
-| 19 | Aucune métrique fabriquée | ✅ implemented and validated | Résultats rapportés avec mesures, origine et limites ; pas de score de pertinence inventé. |
-| 20 | Aucune citation fabriquée | ⚠️ implemented but not fully validated | Traçabilité V1 vérifiée ; toutes les citations V2 restent à contrôler. |
+| 1 | preprocessing works | ✅ implemented and validated | CSV réels, 12 217 jobs traités, rapport qualité et tests de prétraitement. |
+| 2 | processed data can be stored in PostgreSQL | ✅ implemented and validated | 12 217 enregistrements jobs interrogés dans PostgreSQL. |
+| 3 | descriptions are chunked | ✅ implemented and validated | 30 955 chunks V2 publiés, identité texte/chunk vérifiée. |
+| 4 | embeddings can be created | ✅ implemented and validated | 30 955 vecteurs calculés dans 484 lots valides. |
+| 5 | embeddings can be stored in pgvector | ✅ implemented and validated | Tous les vecteurs stockés comparés à tous les checkpoints, écart maximal zéro. |
+| 6 | semantic retrieval works | ✅ implemented and validated | Cinq questions RAG sur V2 ; recherche cosinus et plan HNSW mesurés. |
+| 7 | metadata filtering works | ✅ implemented and validated | Rôle, séniorité, compétences et Remote extraits ; filtres pays de l’interface vérifiés. |
+| 8 | analytics works | ✅ implemented and validated | Cinq réponses réconciliées avec SQL indépendant. |
+| 9 | Analytics/RAG routing works | ✅ implemented and validated | Cinq routes analytics et cinq routes RAG conformes. |
+| 10 | grounded RAG works | ✅ implemented and validated | 67 claims reliés à des citations exactes dans les chunks V2. |
+| 11 | sources are returned | ✅ implemented and validated | 25 références aux jobs réels retournées ; sources visibles dans Streamlit. |
+| 12 | FastAPI exposes real endpoints | ✅ implemented and validated | Six routes demandées HTTP 200 sur V2. |
+| 13 | Streamlit uses those endpoints | ✅ implemented and validated | Trois pages vérifiées dans le navigateur avec données et réponses réelles. |
+| 14 | Docker configuration is usable | ⚠️ implemented but not fully validated | Schéma officiel et 16 contrôles statiques passent ; Docker/Compose non exécutés car indisponibles. |
+| 15 | meaningful tests exist | ✅ implemented and validated | 61 tests réussis, dont trois tests PostgreSQL réels. |
+| 16 | CI exists | ✅ implemented and validated | Workflow présent et inspecté ; exécution hébergée non observée. |
+| 17 | README documents the real implementation | ✅ implemented and validated | Architecture, commandes, V2, modèle local et limites documentés. |
+| 18 | no secrets are committed | ✅ implemented and validated | Inspection des fichiers suivis et de l’historique, zéro résultat ; .env ignoré. |
+| 19 | no fake metrics are reported | ✅ implemented and validated | Comptes et latences mesurés ; aucun score de pertinence inventé. |
+| 20 | no fake citations are generated | ✅ implemented and validated | Toutes les citations des questions et du POST RAG direct correspondent à PostgreSQL. |
 
-## 12. Ce qu'il faut encore faire pour obtenir de vrais résultats finaux V2
+Bilan : **19 ✅, 1 ⚠️, 0 ❌**. Les composants critiques de l’application locale fonctionnent avec V2. La livraison n’est pas déclarée entièrement validée sous Docker tant que le critère 14 n’a pas été exécuté sur une machine disposant de Docker.
 
-1. Laisser le calcul local terminer ses **30 955** vecteurs prévus et vérifier que la transaction publie `job_chunks_v2` et `index_state` ligne 2, sans modifier les 12 217 jobs ni V1.
-2. Exécuter `evaluation.check_index` pour confirmer les comptes exacts, la dimension 384, l'absence de vecteur nul/orphelin, la couverture des jobs et l'index cosinus.
-3. Exécuter `evaluation.verify_v2_storage` pour comparer **chaque** vecteur pgvector à son lot calculé, pas seulement un échantillon.
-4. Relancer FastAPI et Streamlit, puis vérifier les six routes et les trois pages sur **V2 actif**.
-5. Exécuter `evaluation.final_validation` sur les dix questions exactes, avec route, filtres, réponse, documents, sources, latence et preuve réelle en base.
-6. Exécuter `evaluation.compare_indexes` sur les cinq questions RAG, en indiquant les nombres de documents, chevauchements de jobs et latences réellement mesurés. Sans labels de pertinence humains, ne pas inventer un score de qualité.
-7. Relancer la suite complète avec PostgreSQL, Ruff, l'inspection des secrets et les vérifications Docker possibles ; indiquer précisément que `docker compose up --build` n'est pas exécutable sur cette machine.
-8. Mettre à jour ce rapport, les vingt statuts et le hash du **dernier** commit seulement après les contrôles ci-dessus. Ne pas appeler le projet « terminé » avant l'utilisation confirmée de l'index V2 par la recherche et l'interface.
+## 12. Comparaison V1 / V2 : uniquement des mesures
 
-Les commandes reproductibles correspondantes se trouvent dans `evaluation/README.md`. Une automatisation Codex attachée à cette tâche surveille la reprise de l'indexation et doit lancer les contrôles finaux quand V2 sera réellement actif.
+Baseline V1 : `2026-09-25T14:04:42.666141+00:00`. Validation V2 : `2026-10-11T16:11:00.613823+00:00`. Les cinq questions sont identiques.
+
+| Question RAG | Jobs / chunks V1 | Jobs / chunks V2 | Jobs cités communs | Latence V1 | Latence V2 |
+| --- | --- | --- | ---: | ---: | ---: |
+| What responsibilities are expected from Senior Data Engineers? | 6 / 6 | 6 / 6 | 1 | 15.165 s | 9.552 s |
+| What skills are commonly associated with Kubernetes? | 6 / 6 | 6 / 6 | 1 | 15.078 s | 7.439 s |
+| What AWS-related responsibilities appear in Data Engineer roles? | 6 / 6 | 6 / 6 | 2 | 9.643 s | 8.718 s |
+| What are common requirements for Machine Learning Engineer positions? | 6 / 6 | 6 / 6 | 2 | 10.368 s | 8.243 s |
+| What responsibilities appear in remote Data Analyst roles? | 1 / 1 | 1 / 1 | 1 | 6.646 s | 3.186 s |
+
+La récupération garde le même nombre de jobs dans ces cinq cas (6, 6, 6, 6, 1) ; les sources choisies changent en partie. Les latences observées V2 sont plus faibles dans ce lot, **sans permettre d’attribuer à V2 un gain causal de performance** : les mesures ont été effectuées à des dates différentes, avec une charge et des caches différents, et la baseline V1 coexistait avec le calcul V2. Aucun Recall@K, MRR, NDCG, score humain de pertinence ni gain de qualité chiffré n’a été inventé. La traçabilité passe pour les deux versions ; elle n’est pas une mesure complète de pertinence.
+
+## 13. Limites restantes et portée de la livraison
+
+1. **Docker absent** : validation statique uniquement ; les commandes de construction et de lancement doivent être exécutées sur un environnement équipé.
+2. **CI hébergée** : configuration inspectée, aucun résultat de run GitHub Actions confirmé.
+3. **Génération optionnelle** : la validation utilise la synthèse locale extractive. Les fournisseurs OpenAI/Ollama optionnels n’ont pas été testés en conditions réelles.
+4. **Données historiques** : collecte en janvier 2024 ; dates de publication absentes, géographie et taxonomie incomplètes, salaires non estimés. L’absence de France dans l’échantillon ne décrit pas le marché actuel.
+5. **Évidence limitée** : un seul job pour Remote Data Analyst ; les décomptes RAG concernent les postings sélectionnés.
+6. **Benchmark** : pas de jugements de pertinence annotés ; comparaison à des moments différents, sans benchmark matériel isolé.
+7. **V1 conservé** : deux vecteurs nuls mesurés dans le baseline V1. Ils ne concernent pas l’index actif V2, qui contient zéro vecteur nul.
+8. **Dépendances** : deux avertissements de dépréciation dans les tests, sans échec.
+9. **Exploitation locale** : PostgreSQL distant requiert la disponibilité du projet Supabase et du réseau. FastAPI/Streamlit doivent fonctionner pour utiliser l’interface.
+
+Aucun changement d’architecture n’a été nécessaire pendant les contrôles finaux du 11 octobre. Le correctif de lecture paginée antérieur résolvait l’échec SSL et conservait V1, les jobs et les checkpoints.
+
+## 14. Artefacts finaux vérifiables
+
+| Artefact local | Contenu |
+| --- | --- |
+| [`final-v2-index-audit.json`](../evaluation/results/final-v2-index-audit.json) | Comptes, état V2, dimensions, normes, extension, HNSW et liens aux jobs. |
+| [`final-v2-storage-verification.json`](../evaluation/results/final-v2-storage-verification.json) | Comparaison exhaustive des 30 955 embeddings aux 484 checkpoints. |
+| [`final-v2-query-plan.json`](../evaluation/results/final-v2-query-plan.json) | EXPLAIN ANALYZE réel de la recherche cosinus non filtrée V2. |
+| [`final-v2-api-routes.json`](../evaluation/results/final-v2-api-routes.json) | Requêtes, réponses HTTP et latences des six routes. |
+| [`final-v2-validation.json`](../evaluation/results/final-v2-validation.json) | Dix questions exactes, réponses, filtres, sources, claims, SQL et latences. |
+| [`final-v2-traceability.json`](../evaluation/results/final-v2-traceability.json) | Bilan des 25 références, 67 claims et sources du POST RAG direct. |
+| [`final-v1-baseline.json`](../evaluation/results/final-v1-baseline.json) | Mesures historiques V1 des mêmes questions. |
+| [`final-v1-v2-comparison.json`](../evaluation/results/final-v1-v2-comparison.json) | Comparaison mesurée des cinq questions RAG. |
+| [`final-v2-checks.json`](../evaluation/results/final-v2-checks.json) | Résultats des tests, PostgreSQL, Ruff et recherche de placeholders. |
+| [`secrets-inspection.json`](../evaluation/results/secrets-inspection.json) | Inspection finale sans reproduction de valeurs sensibles. |
+| [`docker-static-validation.json`](../evaluation/results/docker-static-validation.json) | Seize contrôles statiques et commandes Docker explicitement non exécutées. |
+| [`ui-v2/ui-validation.json`](../evaluation/results/ui-v2/ui-validation.json) | Bilan manuel des trois pages ; captures et texte de l’assistant dans le même dossier. |
+| [`final-v2-release.json`](../evaluation/results/final-v2-release.json) | Hash de livraison, commit Python validé, comptes et limites de la livraison. |
+
+Ces artefacts sont enregistrés localement dans `evaluation/results/` et ignorés par Git. Le code et le présent rapport sont versionnés ; les CSV, modèles, checkpoints, journaux et secrets restent locaux.
+
+## 15. Utilisation et reproduction des contrôles
+
+Pour utiliser l’application déjà chargée, démarrer les services suivants depuis le dossier de l’application, chacun dans son terminal :
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+.\.venv\Scripts\python.exe -m streamlit run app/Home.py --server.address 127.0.0.1 --server.port 8501
+```
+
+Interface : `http://127.0.0.1:8501`. Documentation API : `http://127.0.0.1:8000/docs`. Le chargement de données et l’indexation sont déjà effectués ; un rechargement volontaire invalide les index et impose une nouvelle indexation.
+
+Les commandes d’audit, de vérification de stockage, des dix questions, de comparaison, des tests PostgreSQL et de Ruff figurent dans `evaluation/README.md`. Les relancer suppose une base accessible et, pour les questions HTTP, FastAPI démarré.

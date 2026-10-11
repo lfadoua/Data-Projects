@@ -4,6 +4,12 @@
 
 A portfolio application that turns job-posting CSVs into PostgreSQL analytics, a designed Streamlit explorer, and answers supported by retrieved job text. V2 adds local neural retrieval and reranking while retaining the V1 index for rollback.
 
+## Measured V2 validation — 11 October 2026
+
+V2 is active with 12,217 jobs, 30,955 chunks and 30,955 pgvector embeddings. Every stored vector matches its saved computed checkpoint. All 61 tests pass, including three PostgreSQL tests; Ruff, the six requested API routes, ten real questions and manual Streamlit checks pass. The [detailed French report](docs/rapport-detaille-implementation-et-validation.md) includes answers, filters, sources, latencies, the measured V1/V2 comparison and all 20 Definition-of-Done criteria.
+
+Docker is unavailable on this machine. Compose passes YAML parsing, the official Compose JSON schema and 16 static checks; `docker compose config`, image builds and `docker compose up --build` were not executed locally. Hosted CI and optional OpenAI/Ollama generation were not validated.
+
 ## Project overview, problem, and solution
 
 Unstructured postings make it difficult to compare roles and skills or trace the basis for career advice. This application separates exact, reproducible statistics from descriptive evidence. FastAPI owns all business logic; Streamlit calls its HTTP endpoints.
