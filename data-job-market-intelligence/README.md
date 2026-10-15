@@ -10,6 +10,8 @@ V2 is active with 12,217 jobs, 30,955 chunks and 30,955 pgvector embeddings. Eve
 
 Docker is unavailable on this machine. Compose passes YAML parsing, the official Compose JSON schema and 16 static checks; `docker compose config`, image builds and `docker compose up --build` were not executed locally. Hosted CI and optional OpenAI/Ollama generation were not validated.
 
+The [premium UI redesign report](docs/premium-ui-redesign.md) describes the six-page light interface, persistent filters/preferences, real job search, source evidence, and the October 15 regression checks. Start the existing API and Streamlit app using the commands below; data loading and reindexing are not needed to try the redesign.
+
 ## Project overview, problem, and solution
 
 Unstructured postings make it difficult to compare roles and skills or trace the basis for career advice. This application separates exact, reproducible statistics from descriptive evidence. FastAPI owns all business logic; Streamlit calls its HTTP endpoints.

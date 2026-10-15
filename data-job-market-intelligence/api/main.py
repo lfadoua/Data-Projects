@@ -142,6 +142,29 @@ def overview(engine: DB, filters: FilterDependency) -> dict:
     return AnalyticsService(engine).overview(filters)
 
 
+@app.get("/api/system/status", tags=["health"])
+def system_status(engine: DB) -> dict:
+    """Read-only index details for the UI; never expose connection configuration."""
+    with engine.connect() as connection:
+        state = connection.scalar(select(IndexState.details).where(IndexState.id == 2))
+        version = "v2" if state else "v1"
+        state = state or connection.scalar(select(IndexState.details).where(IndexState.id == 1))
+        model = JobChunkV2 if version == "v2" else JobChunk
+        chunks, embeddings = connection.execute(
+            select(func.count(), func.count(model.embedding)).select_from(model)
+        ).one()
+    return {
+        "index_version": version if state else None,
+        "embeddings": embeddings,
+        "chunks": chunks,
+        "dimensions": state.get("dimensions") if state else None,
+        "ready": bool(state and chunks and embeddings == chunks and not state.get("partial")),
+        "partial": bool(state and state.get("partial")),
+        "created_at": state.get("created_at") if state else None,
+        "database": "PostgreSQL / pgvector" if engine.dialect.name == "postgresql" else "SQLite",
+    }
+
+
 @app.get("/api/analytics/skills", response_model=ItemsResponse, tags=["analytics"])
 def skills(engine: DB, filters: FilterDependency, limit: int = Query(default=20, ge=1, le=100)):
     return AnalyticsService(engine).skills(filters, limit)
@@ -153,8 +176,9 @@ def jobs(
     filters: FilterDependency,
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None, max_length=200),
 ):
-    return AnalyticsService(engine).jobs(filters, limit, offset)
+    return AnalyticsService(engine).jobs(filters, limit, offset, search)
 
 
 @app.get("/api/analytics/filters", tags=["analytics"])

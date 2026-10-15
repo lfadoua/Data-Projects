@@ -1,130 +1,187 @@
-"""Streamlit design system: stable components and a small, scoped CSS layer."""
+"""Shared light-theme presentation components for the Streamlit workspace."""
 
+from contextlib import contextmanager
 from html import escape
+from pathlib import Path
 
 import streamlit as st
 
-CSS = """
-<style>
-:root { --ink:#15243b; --muted:#64748b; --line:#e3e9f1; --blue:#285cdb; --teal:#0f9e94; }
-.stApp { background:#f5f7fb; color:var(--ink); }
-[data-testid="stSidebar"] { background:#101d32; }
-[data-testid="stSidebarNav"] { display:none; }
-[data-testid="stSidebar"] * { color:#e6edf8; }
-[data-testid="stSidebar"] .stSelectbox label { color:#b8c6da!important; }
-[data-testid="stSidebar"] [data-baseweb="select"] * { color:#213047!important; }
-[data-testid="stSidebar"] [role="combobox"],
-[data-testid="stSidebar"] [role="combobox"] *,
-[data-testid="stSidebar"] input {
-  color:#24344a!important; -webkit-text-fill-color:#24344a!important;
-}
-.block-container { max-width:1420px; padding-top:1.7rem; padding-bottom:4rem; }
-h1,h2,h3 { color:var(--ink); letter-spacing:-.035em; }
-h1 { font-weight:760!important; }
-.dj-brand { padding:1.1rem .2rem 1.2rem; border-bottom:1px solid #33445b; margin-bottom:1rem; }
-.dj-brand-mark { display:inline-block; background:linear-gradient(135deg,#3885ff,#13b3a1); border-radius:12px; padding:.43rem .65rem; font-weight:800; margin-right:.55rem; }
-.dj-brand strong { font-size:1.04rem; letter-spacing:-.02em; }
-.dj-brand p { color:#aebdd1!important; font-size:.81rem; margin:.6rem 0 0; line-height:1.4; }
-.dj-status { background:#1b304a; padding:.7rem .8rem; border:1px solid #314c69; border-radius:12px; color:#dceafb; font-size:.82rem; margin:1rem 0; }
-.dj-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#28d5a5; margin-right:7px; }
-.dj-eyebrow { color:#2e67d6; font-size:.75rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.4rem; }
-.dj-hero { background:linear-gradient(116deg,#142846 0%,#1d4380 63%,#196f81 100%); color:white; border-radius:20px; padding:2.2rem 2.5rem; margin:0 0 1.5rem; box-shadow:0 18px 40px rgba(25,49,88,.13); }
-.dj-hero h1 { color:white!important; font-size:2.2rem!important; margin:.15rem 0 .45rem; }
-.dj-hero p { color:#dce8fa; font-size:1.04rem; margin:0; max-width:780px; }
-.dj-hero .dj-eyebrow { color:#75e3d1; }
-.dj-hero-note { color:#a9c2e2; font-size:.79rem; margin-top:1.15rem; }
-.dj-kpi { background:white; border:1px solid var(--line); border-radius:16px; padding:1.2rem 1.3rem; min-height:170px; box-shadow:0 6px 18px rgba(35,55,85,.035); }
-.dj-kpi-label { color:var(--muted); font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
-.dj-kpi-value { font-size:1.5rem; line-height:1.2; font-weight:760; color:var(--ink); margin-top:.65rem; overflow-wrap:anywhere; }
-.dj-kpi-foot { color:#8290a5; font-size:.76rem; margin-top:.35rem; }
-.dj-section { margin:1.55rem 0 .7rem; }
-.dj-section h2 { font-size:1.17rem!important; margin:0!important; }
-.dj-section p { color:var(--muted); font-size:.83rem; margin:.25rem 0 0; }
-.dj-chip { display:inline-block; border-radius:999px; padding:.25rem .62rem; background:#e9efff; color:#2854b5; font-size:.73rem; font-weight:650; margin:.16rem .25rem .16rem 0; }
-.dj-chip-neutral { background:#edf2f7; color:#516278; }
-.dj-route { display:inline-block; border-radius:7px; padding:.2rem .48rem; color:#1d5bce; background:#e9f0ff; font-size:.7rem; font-weight:800; letter-spacing:.06em; margin-right:.45rem; }
-.dj-route-rag { background:#e5f7f3; color:#127e70; }
-.dj-note { color:var(--muted); font-size:.79rem; margin:.35rem 0 .7rem; }
-.dj-job-head { font-size:1.12rem; font-weight:760; margin:.2rem 0 .3rem; }
-.dj-job-meta { color:#5f7188; font-size:.84rem; margin-bottom:.45rem; }
-.dj-job-divider { border-top:1px solid #eef1f6; margin:.55rem 0; }
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.dj-job-head) { background:white; border:1px solid var(--line); border-radius:15px; box-shadow:0 5px 16px rgba(29,48,77,.035); }
-div[data-testid="stChatMessage"] { border:1px solid var(--line); border-radius:16px; background:white; padding:.35rem .65rem; margin:.55rem 0; }
-div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) { background:#eef4ff; border-color:#dce8fb; }
-div[data-testid="stExpander"] { border:1px solid var(--line); border-radius:11px; background:white; }
-.stButton button, .stLinkButton a { border-radius:9px!important; font-weight:650!important; }
-[data-testid="stAlert"] { border-radius:12px; }
-@media (max-width:700px) { .dj-hero { padding:1.45rem; } .dj-hero h1 { font-size:1.75rem!important; } .block-container { padding-top:1rem; } }
-</style>
-"""
+from app.components.icons import LOGO, MOUNTAIN, icon, svg_image
+
+NAVIGATION = [
+    ("Home", "Home.py", "home"),
+    ("Market Overview", "pages/1_Market_Overview.py", "bar_chart"),
+    ("Job Explorer", "pages/2_Job_Explorer.py", "search"),
+    ("AI Assistant", "pages/3_AI_Assistant.py", "auto_awesome"),
+    ("Validation", "pages/4_Validation.py", "verified_user"),
+    ("Settings", "pages/5_Settings.py", "settings"),
+]
 
 
 def safe(value):
     return escape(str(value if value is not None else ""), quote=True)
 
 
-def shell(title, subtitle, request):
+def theme_css():
+    return (Path(__file__).parents[1] / "assets/theme.css").read_text(encoding="utf-8")
+
+
+def shell(title, active, health):
     st.set_page_config(
-        page_title=f"{title} | Data Job Market Intelligence", page_icon="◈", layout="wide"
+        page_title=f"{title} | DataJob",
+        page_icon="📊",
+        layout="wide",
+        initial_sidebar_state="auto",
     )
-    st.markdown(CSS, unsafe_allow_html=True)
+    st.html(f"<style>{theme_css()}</style>")
     with st.sidebar:
-        st.markdown(
-            '<div class="dj-brand"><span class="dj-brand-mark">◈</span>'
-            "<strong>Data Job Market Intelligence</strong>"
-            "<p>Understand what employers actually ask for.</p></div>",
-            unsafe_allow_html=True,
+        st.html(
+            f'<div class="dj-brand">{LOGO}<div><strong>DataJob</strong>'
+            "<small>Market Intelligence</small></div></div>"
         )
-        st.page_link("Home.py", label="Home", icon=":material/home:")
-        st.page_link(
-            "pages/1_Market_Overview.py", label="Market Overview", icon=":material/bar_chart:"
-        )
-        st.page_link("pages/2_Job_Explorer.py", label="Job Explorer", icon=":material/search:")
-        st.page_link(
-            "pages/3_AI_Assistant.py", label="AI Assistant", icon=":material/auto_awesome:"
-        )
-        status = request("/health", quiet=True)
-        if status:
-            st.markdown(
-                '<div class="dj-status"><span class="dj-dot"></span>'
-                + f"{status['jobs']:,} postings · "
-                + ("Index ready" if status["index_ready"] else "Index unavailable")
-                + "</div>",
-                unsafe_allow_html=True,
+        for index, (label, path, material) in enumerate(NAVIGATION):
+            with st.container(key=f"nav_{index}"):
+                if label == active:
+                    st.html('<span class="dj-nav-active"></span>')
+                st.page_link(path, label=label, icon=f":material/{material}:", width="stretch")
+        with st.container(key="sidebar_bottom"):
+            with st.container(key="promo_card"):
+                st.html(
+                    '<div class="dj-promo">'
+                    + icon("diamond", 26, "#ffffff")
+                    + "<h3>Turn job data into<br>real opportunities.</h3>"
+                    "<p>AI-powered insights for smarter career decisions.</p></div>"
+                )
+                st.page_link(
+                    "pages/2_Job_Explorer.py", label="Explore opportunities →", width="stretch"
+                )
+            st.html(
+                '<div class="dj-workspace"><span class="dj-workspace-icon">'
+                + icon("workspace", 18)
+                + "</span><div><strong>Local workspace</strong>"
+                "<small>Historical data · Jan 2024</small></div></div>"
             )
-        else:
-            st.markdown('<div class="dj-status">Backend unavailable</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="dj-hero"><div class="dj-eyebrow">DATA INTELLIGENCE / HISTORICAL SNAPSHOT</div>'
-        f"<h1>{safe(title)}</h1><p>{safe(subtitle)}</p>"
-        '<div class="dj-hero-note">Job-posting evidence and structured counts · not a live market feed</div></div>',
-        unsafe_allow_html=True,
+            if not health:
+                st.caption("Backend unavailable · retry from Settings")
+
+
+def hero(title, subtitle, home=False):
+    if not home:
+        st.html(
+            '<div class="dj-page-head"><div class="dj-eyebrow">Data intelligence workspace</div>'
+            f"<h1>{safe(title)}</h1><p>{safe(subtitle)}</p></div>"
+        )
+        return
+    features = [
+        ("database", "Real job market data"),
+        ("search", "Semantic search with V2 embeddings"),
+        ("shield", "Grounded AI answers with citations"),
+    ]
+    badges = "".join(
+        f'<span class="dj-feature">{icon(name, 16)}{safe(label)}</span>' for name, label in features
+    )
+    st.html(
+        '<div class="dj-hero"><div class="dj-hero-art">' + MOUNTAIN + "</div>"
+        "<h1>Data Job Market <span>Intelligence</span></h1>"
+        f"<p>{safe(subtitle)}</p>"
+        f'<div class="dj-feature-row">{badges}</div>'
+        '<div class="dj-hero-quote"><strong>From job data<br>to career clarity.</strong></div></div>'
     )
 
 
-def kpi(label, value, foot=""):
-    st.markdown(
-        f'<div class="dj-kpi"><div class="dj-kpi-label">{safe(label)}</div>'
-        f'<div class="dj-kpi-value">{safe(value)}</div>'
-        f'<div class="dj-kpi-foot">{safe(foot)}</div></div>',
-        unsafe_allow_html=True,
+def kpi(label, value, foot="", name="chart", accent="", progress=None, href=None):
+    ring = ""
+    cls = "dj-kpi"
+    if progress is not None:
+        percent = max(0, min(100, progress))
+        offset = 175.93 * (1 - percent / 100)
+        cls += " has-ring"
+        ring = (
+            f'<svg class="dj-kpi-ring" viewBox="0 0 70 70" role="img" '
+            f'aria-label="{percent:.0f} percent validated">'
+            '<circle cx="35" cy="35" r="28" fill="none" stroke="#edf3fb" stroke-width="6"/>'
+            f'<circle cx="35" cy="35" r="28" fill="none" stroke="#1896f5" stroke-width="6" '
+            f'stroke-dasharray="175.93" stroke-dashoffset="{offset:.2f}" '
+            'stroke-linecap="round" transform="rotate(-90 35 35)"/>'
+            '<text x="35" y="40" text-anchor="middle" font-family="Arial,sans-serif" '
+            f'font-size="12" font-weight="700" fill="#111827">{percent:.0f}%</text></svg>'
+        )
+        ring = svg_image(ring, "dj-kpi-ring", f"{percent:.0f}% validated")
+    color = {"purple": "#8b5cf6", "green": "#0cab8a", "orange": "#fb923c"}.get(accent, "#1a8bfa")
+    content = (
+        f'<div class="dj-kpi-top"><span class="dj-kpi-icon {safe(accent)}">'
+        + icon(name, 25, color)
+        + f'</span><div><div class="dj-kpi-label">{safe(label)}</div>'
+        f'<div class="dj-kpi-value">{safe(value)}</div></div></div>'
+        f'<div class="dj-kpi-foot">{safe(foot)}</div>{ring}'
     )
+    if href:
+        path = next(path for _, path, _ in NAVIGATION if f"/{_label(path)}" == href)
+        with st.container(key=f"kpi_link_{name}"):
+            st.html(f'<div class="{cls}">{content}</div>')
+            st.page_link(path, label=f"View {label}", width="stretch")
+    else:
+        st.html(f'<div class="{cls}">{content}</div>')
+
+
+def badge(text, tone="success", name="check"):
+    modifier = "" if tone == "success" else f" {tone}"
+    color = {"neutral": "#65789a", "warning": "#976014"}.get(tone, "#04856b")
+    return f'<span class="dj-badge{modifier}">{icon(name, 12, color)}{safe(text)}</span>'
+
+
+def _label(path):
+    return path.rsplit("/", 1)[-1].split("_", 1)[-1].removesuffix(".py")
+
+
+@contextmanager
+def panel(title, key, subtitle="", action=None):
+    with st.container(key=f"card_{key}"):
+        note = f"<small>{safe(subtitle)}</small>" if subtitle else ""
+        if title or subtitle or action:
+            if action:
+                heading, link = st.columns([3, 1], gap="small")
+            else:
+                heading = st.container()
+            with heading:
+                st.html(
+                    f'<div class="dj-card-header"><div><h2>{safe(title)}</h2>{note}</div></div>'
+                )
+            if action:
+                label, href = action
+                path = next(path for _, path, _ in NAVIGATION if f"/{_label(path)}" == href)
+                with link:
+                    st.page_link(path, label=label, width="stretch")
+        yield
 
 
 def section(title, subtitle=""):
-    st.markdown(
-        f'<div class="dj-section"><h2>{safe(title)}</h2><p>{safe(subtitle)}</p></div>',
-        unsafe_allow_html=True,
-    )
+    st.html(f'<div class="dj-section"><h2>{safe(title)}</h2><p>{safe(subtitle)}</p></div>')
 
 
 def chips(values, neutral=False):
-    class_name = "dj-chip dj-chip-neutral" if neutral else "dj-chip"
-    st.markdown(
-        "".join(f'<span class="{class_name}">{safe(value)}</span>' for value in values),
-        unsafe_allow_html=True,
-    )
+    cls = "dj-chip dj-chip-neutral" if neutral else "dj-chip"
+    st.html("".join(f'<span class="{cls}">{safe(value)}</span>' for value in values))
 
 
 def empty_state(title, description):
-    st.info(f"**{title}**\n\n{description}")
+    st.html(
+        f'<div class="dj-empty">{icon("search", 29)}'
+        f"<h3>{safe(title)}</h3><p>{safe(description)}</p></div>"
+    )
+
+
+def source_chips(sources):
+    links = []
+    for source in sources:
+        source_id = safe(source.get("source_id", ""))
+        url = source.get("source_url") or ""
+        if url.startswith(("https://", "http://")):
+            links.append(
+                f'<a class="dj-source-chip" href="{safe(url)}" target="_blank" '
+                f'rel="noopener noreferrer" title="{safe(source.get("job_title"))}">'
+                f"[{source_id}]</a>"
+            )
+        else:
+            links.append(f'<span class="dj-source-chip">[{source_id}]</span>')
+    return "".join(links)

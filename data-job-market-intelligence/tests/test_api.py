@@ -25,10 +25,22 @@ def test_health_reports_database_and_index(client):
         "chunks": 4,
         "index_ready": True,
     }
+    status = client.get("/api/system/status")
+    assert status.status_code == 200
+    assert status.json()["index_version"] == "v1"
+    assert status.json()["embeddings"] == 4
+    assert status.json()["ready"]
+    assert "password" not in status.text.lower()
 
 
 def test_filtered_jobs_and_validation(client):
     assert client.get("/api/analytics/jobs?country=France").json()["total"] == 2
+    result = client.get("/api/analytics/jobs", params={"search": "PYTHON", "limit": 1})
+    assert result.json()["total"] == 3 and len(result.json()["items"]) == 1
+    assert client.get("/api/analytics/jobs?search=Python&country=France").json()["total"] == 1
+    assert client.get("/api/analytics/jobs", params={"search": "%"}).json()["total"] == 0
+    assert client.get("/api/analytics/jobs", params={"search": "' OR 1=1 --"}).json()["total"] == 0
+    assert client.get("/api/analytics/jobs", params={"search": "x" * 201}).status_code == 422
     assert client.get("/api/analytics/jobs?limit=1000").status_code == 422
     assert client.post("/api/assistant/query", json={"question": ""}).status_code == 422
     assert (

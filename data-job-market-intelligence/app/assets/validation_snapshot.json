@@ -1,0 +1,115 @@
+{
+  "recorded_at": "2026-10-11T19:16:23.388982+00:00",
+  "source_commit": "18e28f4827352b20d01de02c86cec901814ced79",
+  "tests_passed": 61,
+  "postgresql_tests_passed": 3,
+  "tests_elapsed_seconds": 44.04,
+  "criteria_validated": 19,
+  "criteria_total": 20,
+  "vectors_verified": 30955,
+  "docker_runtime_validated": false,
+  "hosted_ci_verified": false,
+  "criteria": [
+    {
+      "number": 1,
+      "criterion": "preprocessing works",
+      "status": "validated"
+    },
+    {
+      "number": 2,
+      "criterion": "processed data can be stored in PostgreSQL",
+      "status": "validated"
+    },
+    {
+      "number": 3,
+      "criterion": "descriptions are chunked",
+      "status": "validated"
+    },
+    {
+      "number": 4,
+      "criterion": "embeddings can be created",
+      "status": "validated"
+    },
+    {
+      "number": 5,
+      "criterion": "embeddings can be stored in pgvector",
+      "status": "validated"
+    },
+    {
+      "number": 6,
+      "criterion": "semantic retrieval works",
+      "status": "validated"
+    },
+    {
+      "number": 7,
+      "criterion": "metadata filtering works",
+      "status": "validated"
+    },
+    {
+      "number": 8,
+      "criterion": "analytics works",
+      "status": "validated"
+    },
+    {
+      "number": 9,
+      "criterion": "Analytics/RAG routing works",
+      "status": "validated"
+    },
+    {
+      "number": 10,
+      "criterion": "grounded RAG works",
+      "status": "validated"
+    },
+    {
+      "number": 11,
+      "criterion": "sources are returned",
+      "status": "validated"
+    },
+    {
+      "number": 12,
+      "criterion": "FastAPI exposes real endpoints",
+      "status": "validated"
+    },
+    {
+      "number": 13,
+      "criterion": "Streamlit uses those endpoints",
+      "status": "validated"
+    },
+    {
+      "number": 14,
+      "criterion": "Docker configuration is usable",
+      "status": "partial"
+    },
+    {
+      "number": 15,
+      "criterion": "meaningful tests exist",
+      "status": "validated"
+    },
+    {
+      "number": 16,
+      "criterion": "CI exists",
+      "status": "validated"
+    },
+    {
+      "number": 17,
+      "criterion": "README documents the real implementation",
+      "status": "validated"
+    },
+    {
+      "number": 18,
+      "criterion": "no secrets are committed",
+      "status": "validated"
+    },
+    {
+      "number": 19,
+      "criterion": "no fake metrics are reported",
+      "status": "validated"
+    },
+    {
+      "number": 20,
+      "criterion": "no fake citations are generated",
+      "status": "validated"
+    }
+  ],
+  "source": "Final V2 validation report, 11 October 2026"
+}

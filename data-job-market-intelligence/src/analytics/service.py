@@ -1,6 +1,6 @@
 """All counts and distributions come from SQL over the filtered dataset."""
 
-from sqlalchemy import exists, func, select
+from sqlalchemy import exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from src.analytics.schemas import Filters
@@ -151,16 +151,31 @@ class AnalyticsService:
                 for role, skill, count in session.execute(statement)
             ]
 
-    def jobs(self, filters=None, limit=20, offset=0):
-        statement = (
-            apply_filters(select(Job), filters or {}).order_by(Job.id).offset(offset).limit(limit)
-        )
+    def jobs(self, filters=None, limit=20, offset=0, search=None):
+        statement = apply_filters(select(Job), filters or {})
+        if search and search.strip():
+            # Treat user-entered wildcards literally; values remain bound parameters.
+            literal = search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            pattern = f"%{literal}%"
+            statement = statement.where(
+                or_(
+                    Job.job_title.ilike(pattern, escape="\\"),
+                    Job.company.ilike(pattern, escape="\\"),
+                    Job.cleaned_description.ilike(pattern, escape="\\"),
+                )
+            )
         with Session(self.engine) as session:
+            total = session.scalar(select(func.count()).select_from(statement.subquery()))
             return {
-                "total": self.count(filters),
+                "total": total,
                 "limit": limit,
                 "offset": offset,
-                "items": [job_dict(job) for job in session.scalars(statement)],
+                "items": [
+                    job_dict(job)
+                    for job in session.scalars(
+                        statement.order_by(Job.id).offset(offset).limit(limit)
+                    )
+                ],
             }
 
     def facets(self):
