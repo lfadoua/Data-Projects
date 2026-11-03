@@ -2,6 +2,8 @@
 
 import logging
 from functools import lru_cache
+from threading import Lock
+from time import perf_counter
 
 import numpy as np
 from sqlalchemy import select
@@ -13,6 +15,7 @@ from src.database.repositories import apply_filters
 from src.rag.embeddings import BGEEmbeddings, LocalEmbeddings, OpenAIEmbeddings
 
 log = logging.getLogger(__name__)
+_provider_lock = Lock()
 
 
 @lru_cache(maxsize=3)
@@ -20,28 +23,43 @@ def local_provider(filename):
     return LocalEmbeddings.load(filename)
 
 
-def retrieve(question, filters, engine):
+@lru_cache(maxsize=1)
+def bge_provider():
+    """Reuse one fixed model; index identity/dimensions are still checked per query."""
+    return BGEEmbeddings()
+
+
+def retrieve(question, filters, engine, *, timings=None):
     s = get_settings()
+    details_timings = timings if timings is not None else {}
     with Session(engine) as session:
+        tick = perf_counter()
         state = session.get(IndexState, 2) if engine.dialect.name == "postgresql" else None
         state = state or session.get(IndexState, 1)
         if not state:
             raise ValueError("Retrieval index is missing. Run python -m src.rag.indexing.")
         details = state.details
-        provider = (
-            local_provider(details["model_file"])
-            if details["provider"] == "local"
-            else BGEEmbeddings()
-            if details["provider"] == "fastembed"
-            else OpenAIEmbeddings()
-        )
+        details_timings["index_lookup"] = (perf_counter() - tick) * 1000
+        tick = perf_counter()
+        with _provider_lock:
+            provider = (
+                local_provider(details["model_file"])
+                if details["provider"] == "local"
+                else bge_provider()
+                if details["provider"] == "fastembed"
+                else OpenAIEmbeddings()
+            )
+        details_timings["model_acquisition"] = (perf_counter() - tick) * 1000
         if provider.space != details["space"] or provider.dimensions != details["dimensions"]:
             raise ValueError(
                 "Embedding configuration differs from the index. Reindex before querying."
             )
+        tick = perf_counter()
         vector = provider.embed_text(question)
+        details_timings["query_embedding"] = (perf_counter() - tick) * 1000
         if not np.isfinite(vector).all() or np.linalg.norm(vector) == 0:
             return [], details
+        tick = perf_counter()
         model = JobChunkV2 if details["provider"] == "fastembed" else JobChunk
         query = (
             select(model)
@@ -92,5 +110,6 @@ def retrieve(question, filters, engine):
             for c, score in pairs
             if score >= s.rag_similarity_threshold
         ]
+        details_timings["vector_search_and_materialization"] = (perf_counter() - tick) * 1000
         log.info("Retrieved %d chunks", len(hits))
         return hits, details

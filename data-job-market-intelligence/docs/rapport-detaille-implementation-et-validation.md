@@ -1,5 +1,7 @@
 # Rapport détaillé — Data Job Market Intelligence
 
+> Historical record: this report describes the 11 October 2026 validation. For recent tests and the owner-reported Docker/Supabase runtime, see [the current validation summary](PROJECT_VALIDATION_SUMMARY.md). Original measurements below are preserved.
+
 **Bilan final fonctionnel V2 — 11 octobre 2026.** Rapport assemblé à partir des contrôles réellement exécutés ; les dates précises des mesures sont enregistrées dans les JSON. Les horodatages techniques ci-dessous sont en UTC. La validation locale utilise PostgreSQL Supabase, FastAPI et Streamlit. **Les composants critiques fonctionnent avec V2. Docker reste partiellement validé**, car son exécutable est absent sur cet ordinateur. Aucun déploiement Docker effectif ni succès GitHub Actions hébergé n’est affirmé.
 
 | Résultat final | Mesure vérifiée |

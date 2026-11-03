@@ -47,13 +47,11 @@ def shell(title, active, health):
         with st.container(key="sidebar_bottom"):
             with st.container(key="promo_card"):
                 st.html(
-                    '<div class="dj-promo">'
-                    + icon("diamond", 26, "#ffffff")
-                    + "<h3>Turn job data into<br>real opportunities.</h3>"
-                    "<p>AI-powered insights for smarter career decisions.</p></div>"
+                    '<div class="dj-promo">' + "<h3>Explore historical job data</h3>"
+                    "<p>Skills and responsibilities recorded in January 2024.</p></div>"
                 )
                 st.page_link(
-                    "pages/2_Job_Explorer.py", label="Explore opportunities →", width="stretch"
+                    "pages/2_Job_Explorer.py", label="Browse historical postings →", width="stretch"
                 )
             st.html(
                 '<div class="dj-workspace"><span class="dj-workspace-icon">'

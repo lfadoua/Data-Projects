@@ -3,21 +3,34 @@
 import pandas as pd
 import streamlit as st
 
-from app.components.dashboard import date_label, index_status, validation_results
+from app.components.dashboard import (
+    current_validation_results,
+    date_label,
+    index_status,
+    validation_results,
+)
 from app.components.design import kpi, panel
 from app.components.ui import read, setup
 
 setup("Validation", "Measured project readiness, transparent evidence and remaining limitations.")
 release = validation_results()
-date = date_label(release["recorded_at"])
-st.info(f"Historical release verification · {date}. These test results are not a new test run.")
-columns = st.columns(4, gap="medium")
+current = current_validation_results()
+date = date_label(current["recorded_at"])
+historical_date = date_label(release["recorded_at"])
+st.info(f"Recorded test run · {date}. Opening this page does not execute tests.")
+st.caption(
+    f"Recent evidence: {current['test_scope']}. "
+    f"Original release: {historical_date}, {release['tests_passed']} tests and "
+    f"{release['criteria_validated']}/20 criteria. These are separate assessments."
+)
+with st.container(key="validation_kpis"):
+    columns = st.columns(4, gap="medium")
 with columns[0]:
-    kpi("Tests Passed", release["tests_passed"], f"Verified {date}", name="check", accent="green")
+    kpi("Tests Passed", current["tests_passed"], f"Recorded {date}", name="check", accent="green")
 with columns[1]:
     kpi(
         "PostgreSQL Tests",
-        release["postgresql_tests_passed"],
+        current["postgresql_tests_passed"],
         "Real database integration checks",
         name="database",
         accent="purple",
@@ -26,25 +39,29 @@ with columns[2]:
     kpi(
         "Vectors Verified",
         f"{release['vectors_verified']:,}",
-        "Compared with every saved batch",
+        f"Full checkpoint comparison · {historical_date}",
         name="shield",
     )
 with columns[3]:
-    validated, total = release["criteria_validated"], release["criteria_total"]
     kpi(
-        "Validation Criteria",
-        f"{validated} / {total}",
-        "Docker runtime validation remains partial",
+        "Docker Runtime",
+        "User verified",
+        f"Reported {date_label(current['docker']['reported_at'])}",
         name="shield",
         accent="orange",
-        progress=100 * validated / total,
     )
 
 left, right = st.columns([1.8, 1], gap="medium")
 with left:
     with panel(
-        "Definition of Done", "validation_criteria", f"All 20 original criteria · verified {date}"
+        "Historical Definition of Done",
+        "validation_criteria",
+        f"Original release · {historical_date} · {release['criteria_validated']}/20 at that time",
     ):
+        st.caption(
+            "This is the original assessment, preserved unchanged. Later Docker tests "
+            "cover the external-Supabase setup and do not retroactively change this score."
+        )
         frame = pd.DataFrame(release["criteria"])
         frame["status"] = frame["status"].map(
             {
@@ -64,17 +81,23 @@ with right:
     ):
         index_status(read("/api/system/status", quiet=True))
     with panel("Known Validation Limits", "validation_limits"):
-        st.warning("Docker runtime: not fully validated.")
+        st.info("Docker runtime: user-verified locally with external Supabase.")
         st.write(
-            "Compose passed its official schema and 16 static checks. "
-            "Container builds and startup were not executed on this machine."
+            "The user reported healthy API/frontend containers, SQL analytics and "
+            "extractive RAG on ports 8002/8502. Compose configuration was checked "
+            "independently; the Docker engine was not reachable during that check."
         )
         st.info("Hosted GitHub Actions execution has not been confirmed.")
         st.caption(
-            "Optional OpenAI/Ollama generation was not included in the local release validation."
+            "Local Qwen 1.5B generation was tested separately on 30 October. "
+            "Four of four measured attempts returned accepted bounded responses; "
+            "two responses had a rejected claim. Generative Docker execution is unverified."
         )
     with panel("Verification Provenance", "validation_provenance"):
-        st.caption(release["source"])
+        st.write(f"**Test method:** {current['test_provenance']}")
+        st.write(f"**Docker method:** {current['docker']['provenance']}")
+        st.caption(current["source"])
+        st.caption("Historical release commit (not the current uncommitted changes):")
         st.code(release["source_commit"], language=None)
         st.caption(
             "Citation traceability, six API routes and ten real questions "

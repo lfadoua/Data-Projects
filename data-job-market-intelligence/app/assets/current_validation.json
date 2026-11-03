@@ -1,0 +1,20 @@
+{
+  "recorded_at": "2026-11-01",
+  "tests_passed": 202,
+  "postgresql_tests_passed": 3,
+  "test_provenance": "Local pytest after UI/UX changes, 1 November 2026: 202 passed, including 3 read-only PostgreSQL tests; not rerun when this page opens",
+  "test_scope": "Full suite with read-only PostgreSQL integration enabled",
+  "hosted_ci_verified": false,
+  "docker": {
+    "status": "user_verified",
+    "reported_at": "2026-10-31",
+    "scope": "compose.supabase.yml: api/frontend with existing external Supabase",
+    "provenance": "User-reported manual builds, healthy containers, SQL and extractive RAG",
+    "agent_runtime_verified": false,
+    "agent_compose_config_verified": true,
+    "agent_engine_reachable": false,
+    "host_api_port": 8002,
+    "host_frontend_port": 8502
+  },
+  "source": "See docs/UI_UX_FINAL_REVIEW.md for the 202-test UI/UX run; docs/PROJECT_VALIDATION_SUMMARY.md preserves the earlier 196-test checkpoint and Docker provenance"
+}

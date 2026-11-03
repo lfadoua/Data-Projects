@@ -1,0 +1,67 @@
+{
+  "recorded_at": "2026-10-30",
+  "provenance": "Curated from saved local execution artifacts; not a new run",
+  "test_result": "193 passed, 2 deprecation warnings in 32.53s",
+  "postgresql_tests_passed": 3,
+  "test_command": [
+    "-m",
+    "pytest",
+    "-q",
+    "--tb=short"
+  ],
+  "jobs": 12217,
+  "v1_chunks": 23638,
+  "v2_chunks": 30955,
+  "v2_embeddings": 30955,
+  "v2_dimensions": 384,
+  "sql_python": {
+    "jobs": 5121,
+    "denominator": 12217,
+    "percentage": 41.92
+  },
+  "generative_model": "qwen2.5:1.5b",
+  "generative_summary": {
+    "measured_cases": 8,
+    "generation_attempts": 4,
+    "accepted_generated_responses": 4,
+    "accepted_responses_with_rejected_claims": 2,
+    "extractive_fallbacks": 0,
+    "accepted_rate_of_attempts": 1.0,
+    "fallback_rate_of_attempts": 0.0,
+    "no_generation_cases": 4,
+    "model_abstentions": 0,
+    "accepted_claims_with_attribution_or_inflection": 4,
+    "accepted_claims_still_verbatim": 2,
+    "fallback_reasons": {},
+    "traceability_error_cases": 0,
+    "claim_count": 6,
+    "semantic_entailment_measured": false
+  },
+  "generative_service_seconds": {
+    "senior_de_responsibilities": {
+      "median": 11.553223,
+      "min": 11.363101,
+      "max": 11.743345
+    },
+    "aws_de_responsibilities": {
+      "median": 16.534815,
+      "min": 16.164682,
+      "max": 16.904948
+    },
+    "kubernetes_skills": {
+      "median": 0.776668,
+      "min": 0.514377,
+      "max": 1.03896
+    },
+    "insufficient_evidence": {
+      "median": 0.847074,
+      "min": 0.369681,
+      "max": 1.324468
+    }
+  },
+  "limitations": [
+    "Raw logs are local and ignored, not bundled evidence",
+    "Citation matching is not a general semantic entailment proof",
+    "Optional generative Docker mode and hosted CI are unverified"
+  ]
+}

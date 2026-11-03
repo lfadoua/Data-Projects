@@ -20,7 +20,7 @@ for name, value in prefs.items():
     st.session_state.setdefault(f"pref_{name}", value)
 left, right = st.columns([1.1, 1], gap="medium")
 with left:
-    with panel("Workspace Preferences", "settings_preferences"):
+    with panel("Display Preferences", "settings_preferences", "Applies to this browser session"):
         st.selectbox(
             "Jobs per page",
             [6, 12, 24],
@@ -55,9 +55,9 @@ with left:
         )
         st.page_link("pages/4_Validation.py", label="Review validation and limitations →")
 with right:
-    with panel("System Status", "settings_status"):
+    with panel("Technical Information", "settings_status", "Read-only API and V2 index status"):
         index_status(read("/api/system/status", quiet=True))
-        if st.button("Refresh system and cached data", width="stretch", icon=":material/refresh:"):
+        if st.button("Refresh displayed data", width="stretch", icon=":material/refresh:"):
             cached_get.clear()
             cached_health.clear()
             get_facets.clear()

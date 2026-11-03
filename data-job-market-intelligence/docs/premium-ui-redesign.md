@@ -1,5 +1,7 @@
 # Refonte premium de l'interface Data Job Market Intelligence
 
+> Historical UI redesign report. Current test counts and separately sourced Docker evidence are in [the validation summary](PROJECT_VALIDATION_SUMMARY.md); the original measurements below are retained.
+
 Date du compte rendu : **15 octobre 2026**. Le redesign est implémenté dans l'application Streamlit existante. FastAPI conserve les calculs métier, les accès PostgreSQL/pgvector et le routage Analytics/RAG. Ce document décrit les changements présents dans le code et distingue les vérifications exécutées des limites de validation.
 
 ## 1. Résultat et périmètre

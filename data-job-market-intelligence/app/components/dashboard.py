@@ -23,6 +23,7 @@ def date_label(value):
 
 @st.cache_data(ttl=60, show_spinner=False)
 def validation_results():
+    """Preserve the original dated release and its 20-criterion assessment."""
     snapshot = json.loads(
         (Path(__file__).parents[1] / "assets/validation_snapshot.json").read_text(encoding="utf-8")
     )
@@ -42,17 +43,24 @@ def validation_results():
     return snapshot
 
 
+@st.cache_data(ttl=60, show_spinner=False)
+def current_validation_results():
+    """Recorded evidence, including explicit provenance for user Docker tests."""
+    return json.loads(
+        (Path(__file__).parents[1] / "assets/current_validation.json").read_text(encoding="utf-8")
+    )
+
+
 def home_metrics(overview, index):
-    validation = validation_results()
+    validation = current_validation_results()
     date = date_label(validation["recorded_at"])
     count = overview.get("total_jobs") if overview else None
     vectors = index.get("embeddings") if index and index.get("index_version") == "v2" else None
-    validated, total = validation["criteria_validated"], validation["criteria_total"]
     with st.container(key="home_kpis"):
         cols = st.columns(4, gap="medium")
         with cols[0]:
             kpi(
-                "Job Postings",
+                "Historical Job Postings",
                 f"{count:,}" if count is not None else "Unavailable",
                 "Matching postings in the historical dataset.",
                 name="file",
@@ -69,19 +77,18 @@ def home_metrics(overview, index):
             kpi(
                 "Tests Passed",
                 validation["tests_passed"],
-                f"Last verified · {date}",
+                f"Recorded test run · {date}",
                 name="check",
                 accent="green",
                 href="/Validation",
             )
         with cols[3]:
             kpi(
-                "Validation Criteria",
-                f"{validated} / {total}",
-                "Docker runtime not fully validated.",
+                "Docker Runtime",
+                "User verified",
+                f"External Supabase · reported {date_label(validation['docker']['reported_at'])}",
                 name="shield",
                 accent="orange",
-                progress=100 * validated / total,
                 href="/Validation",
             )
 

@@ -1,11 +1,13 @@
 """Validated HTTP API for analytics and grounded retrieval."""
 
+import hashlib
 import hmac
 import json
 import logging
 from threading import Lock
 from time import perf_counter
 from typing import Annotated, Literal
+from uuid import uuid4
 
 import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
@@ -28,6 +30,21 @@ from src.routing.service import ask
 configure_logging()
 log = logging.getLogger(__name__)
 app = FastAPI(title="Data Job Market Intelligence", version="2.0.0")
+app.state.instance_id = uuid4().hex
+app.state.code_revision = hashlib.sha256(
+    b"".join(
+        (PROJECT_ROOT / name).read_bytes()
+        for name in (
+            "api/main.py",
+            "src/rag/service.py",
+            "src/rag/retriever.py",
+            "src/rag/grounding.py",
+            "src/llm/client.py",
+            "src/analytics/schemas.py",
+            "src/prompts/selected_summary.py",
+        )
+    )
+).hexdigest()[:16]
 index_lock = Lock()
 DB = Annotated[object, Depends(database)]
 FilterDependency = Annotated[Filters, Depends()]
@@ -63,6 +80,8 @@ async def timing(request: Request, call_next):
     start = perf_counter()
     response = await call_next(request)
     response.headers["X-Response-Time"] = f"{perf_counter() - start:.3f}"
+    response.headers["X-App-Instance"] = app.state.instance_id
+    response.headers["X-Code-Revision"] = app.state.code_revision
     log.info(
         "%s %s %s %.3fs",
         request.method,
@@ -208,15 +227,40 @@ def quality() -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def answer_response(result, started):
+    """Serialize a validated answer once; measured render time is returned in headers.
+
+    Serialization cannot be included in its own body without serializing twice.
+    Pipeline stages stay in metadata; actual JSON rendering and handler time use headers.
+    """
+    tick = perf_counter()
+    payload = Answer.model_validate(result).model_dump(mode="json")
+    payload["metadata"]["api_timings_ms"] = {
+        "response_conversion": (perf_counter() - tick) * 1000,
+        "handler_before_serialization": (perf_counter() - started) * 1000,
+    }
+    tick = perf_counter()
+    response = JSONResponse(content=payload)
+    serialization_ms = (perf_counter() - tick) * 1000
+    response.headers["X-Serialization-Time-Ms"] = f"{serialization_ms:.6f}"
+    response.headers["Server-Timing"] = (
+        f"serialization;dur={serialization_ms:.6f}, "
+        f"handler;dur={(perf_counter() - started) * 1000:.6f}"
+    )
+    return response
+
+
 @app.post("/api/assistant/query", response_model=Answer, tags=["assistant"])
 def assistant(body: QueryRequest, engine: DB):
+    started = perf_counter()
     result = ask(body, engine)
     log.info("Assistant route=%s", result.route)
-    return result
+    return answer_response(result, started)
 
 
 @app.post("/api/rag/query", response_model=Answer, tags=["rag"])
 def rag(body: QueryRequest, engine: DB):
+    started = perf_counter()
     from src.routing.classifier import classify
 
     if classify(body.question).route == "analytics":
@@ -224,7 +268,8 @@ def rag(body: QueryRequest, engine: DB):
     filters = merge_filters(
         extract_metadata(body.question, AnalyticsService(engine).facets()), body.filters
     )
-    return answer_question(body.question, filters, engine)
+    result = answer_question(body.question, filters, engine, response_mode=body.response_mode)
+    return answer_response(result, started)
 
 
 @app.post("/api/rag/reindex", tags=["rag"])

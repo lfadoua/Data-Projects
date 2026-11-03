@@ -2,6 +2,7 @@
 
 import os
 import re
+from math import isfinite
 from pathlib import Path
 
 import httpx
@@ -14,7 +15,6 @@ from app.components.design import (
     chips,
     empty_state,
     hero,
-    safe,
     section,
     shell,
     source_chips,
@@ -31,6 +31,91 @@ FILTER_FIELDS = [
     ("company", "Company"),
     ("skill", "Skills"),
 ]
+RESPONSE_MODES = {
+    None: "Configured default",
+    "extractive": "Extractive fast",
+    "generative": "Generative Ollama",
+}
+
+
+def _save_response_mode():
+    value = st.session_state["_assistant_response_mode"]
+    st.session_state["assistant_response_mode"] = None if value == "configured" else value
+
+
+def response_mode_selector():
+    mode = st.session_state.setdefault("assistant_response_mode", "extractive")
+    if mode not in RESPONSE_MODES:
+        mode = st.session_state["assistant_response_mode"] = "extractive"
+    # Keep the preference after Streamlit cleans up widgets on other pages.
+    st.session_state["_assistant_response_mode"] = mode or "configured"
+    st.selectbox(
+        "Response mode",
+        ["configured", "extractive", "generative"],
+        format_func=lambda value: RESPONSE_MODES[None if value == "configured" else value],
+        key="_assistant_response_mode",
+        on_change=_save_response_mode,
+        help=(
+            "Applies to descriptive questions; counts always use SQL. "
+            "Configured default keeps the server's existing behavior. "
+            "Extractive fast is recommended for this PC and selects exact quotes "
+            "without calling the LLM."
+        ),
+    )
+    return st.session_state["assistant_response_mode"]
+
+
+def assistant_body(question, filters, response_mode=None):
+    if response_mode not in RESPONSE_MODES:
+        raise ValueError("Unknown response mode")
+    body = {"question": question, "filters": dict(filters)}
+    if response_mode is not None:
+        body["response_mode"] = response_mode
+    return body
+
+
+def assistant_wait_message(response_mode):
+    return {
+        "extractive": "Retrieving relevant postings and selecting exact quotes…",
+        "generative": "Retrieving postings, generating a synthesis and checking its sources…",
+    }.get(response_mode, "Searching relevant postings and checking the evidence…")
+
+
+def answer_caption(metadata):
+    """Describe the returned output, including old responses without new metadata."""
+    mode = metadata.get("mode")
+    output = metadata.get("output_mode")
+    attempted = metadata.get("generation_attempted")
+    parts = []
+    if metadata.get("insufficient_evidence") or output == "insufficient_evidence":
+        parts.append("Insufficient evidence")
+    if mode == "extractive_fallback":
+        parts.append("Extractive fallback")
+    elif mode == "extractive":
+        parts.append("Extractive")
+    elif attempted is False:
+        parts.append("No LLM call")
+    elif mode in {"ollama", "openai"}:
+        parts.append("Ollama" if mode == "ollama" else "OpenAI")
+    elif attempted is True:
+        parts.append("Generation attempted")
+    if output in {"extractive_quotes", "llm_selected_quotes"}:
+        parts.append("Exact quotes")
+    elif output == "generated_synthesis":
+        parts.append("Natural synthesis")
+    elif output == "extractive_synthesis":
+        parts.append("Local synthesis")
+    timings = metadata.get("timings_ms")
+    milliseconds = timings.get("total") if isinstance(timings, dict) else None
+    seconds = None
+    for value, scale in ((milliseconds, 1000), (metadata.get("latency_seconds"), 1)):
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            if isfinite(value) and value >= 0:
+                seconds = value / scale
+                break
+    if seconds is not None:
+        parts.append(f"{seconds:.2f} s" if seconds < 1 else f"{seconds:.1f} s")
+    return " · ".join(parts)
 
 
 def api_url():
@@ -253,7 +338,7 @@ def sources_panel(response, expanded_first=False):
     by_id = {e["source_id"]: e for e in response.get("evidence", [])}
     sources = response.get("sources", [])
     if not sources:
-        empty_state("No retrieved sources", "This answer has no job-posting evidence to inspect.")
+        empty_state("No cited sources", "This answer has no cited job-posting evidence to inspect.")
         return
     for index, source in enumerate(sources):
         label = f"{source['source_id']} · {source['job_title']}"
@@ -262,7 +347,15 @@ def sources_panel(response, expanded_first=False):
             place = " · ".join(str(source[k]) for k in ("city", "country") if source.get(k))
             st.caption(place or "Location not listed")
             evidence = by_id.get(source["source_id"], {})
-            st.write(source.get("excerpt") or evidence.get("chunk_text", "")[:500])
+            passage = (
+                evidence.get("chunk_text")
+                or source.get("excerpt")
+                or "No source passage was supplied with this answer."
+            )
+            if len(passage) > 900:
+                st.caption("Scroll within the passage to read the full retrieved text.")
+            with st.container(height=320 if len(passage) > 900 else "content", border=False):
+                st.write(passage)
             url = source.get("source_url") or ""
             if url.startswith(("https://", "http://")):
                 st.link_button("Original posting ↗", url, width="stretch")
@@ -270,16 +363,23 @@ def sources_panel(response, expanded_first=False):
 
 def render_answer(response, key="answer", show_sources=True):
     route = response["route"]
-    meta = response.get("metadata", {})
+    meta = response.get("metadata") or {}
     cls = "dj-route" + (" dj-route-rag" if route == "rag" else "")
     explanation = (
         "Calculated from the structured job database."
         if route == "analytics"
-        else "Synthesized from retrieved job-posting evidence."
+        else "Based on selected historical job postings."
     )
-    st.html(
-        f'<span class="{cls}">{safe(route.upper())}</span><div class="dj-note">{explanation}</div>'
-    )
+    label = "SQL ANALYTICS" if route == "analytics" else "RAG"
+    st.html(f'<span class="{cls}">{label}</span><div class="dj-note">{explanation}</div>')
+    caption = answer_caption(meta)
+    if caption:
+        st.caption(caption)
+    if meta.get("insufficient_evidence") or meta.get("output_mode") == "insufficient_evidence":
+        st.warning(
+            "There is not enough matching evidence for a supported answer. "
+            "Try a broader question or remove a filter."
+        )
     # Preserve every word and citation; make typographic bullet lines readable Markdown.
     st.markdown(response["answer"].replace("\n• ", "\n\n- "))
     filters = meta.get("filters") or {}
@@ -303,27 +403,57 @@ def render_answer(response, key="answer", show_sources=True):
             + source_chips(response.get("sources", []))
             + "</div>"
         )
-        if meta.get("warning"):
+        if meta.get("mode") == "extractive_fallback":
+            st.warning(
+                "Generation was unavailable or failed source checks. "
+                "Showing an extractive fallback."
+            )
+        elif meta.get("warning"):
             st.warning(meta["warning"])
+        grounding = meta.get("grounding")
+        if isinstance(grounding, dict):
+            if grounding.get("rejected_claims", 0):
+                st.caption("Some claims were removed by source checks; paraphrases need review.")
+            elif (
+                grounding.get("strategy") == "conservative_paraphrase"
+                and grounding.get("source_ids_validated") is True
+                and grounding.get("exact_quotes_validated") is True
+            ):
+                st.caption("Source checks passed; semantic support is not independently verified.")
         if response.get("skills"):
             st.caption("Skills in selected evidence · not market-wide frequencies")
             chips([s["name"] for s in response["skills"][:10]])
         if show_sources:
             section("Source evidence", "Inspect the supporting text and original posting.")
             sources_panel(response)
-        if meta.get("debug") and preferences()["show_technical"]:
+        technical = {
+            name: meta[name]
+            for name in (
+                "mode",
+                "requested_mode",
+                "output_mode",
+                "generation_attempted",
+                "generation_used",
+                "fallback_reason",
+                "timings_ms",
+                "grounding",
+                "warning",
+                "debug",
+            )
+            if name in meta
+        }
+        if technical and preferences()["show_technical"]:
             with st.expander("Technical retrieval details"):
-                st.json(meta["debug"])
+                st.json(technical)
 
 
 @st.cache_data(ttl=600, show_spinner=False)
-def assistant_preview(url, filters, index_identity):
+def assistant_preview(url, filters, index_identity, response_mode="extractive"):
     response = httpx.post(
         url + "/api/assistant/query",
-        json={
-            "question": "What responsibilities are expected from Senior Data Engineers?",
-            "filters": dict(filters),
-        },
+        json=assistant_body(
+            "What responsibilities are expected from Senior Data Engineers?", filters, response_mode
+        ),
         timeout=150,
     )
     response.raise_for_status()

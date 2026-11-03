@@ -25,4 +25,4 @@ def get_engine():
             "connect_timeout": 10,
             "options": f"-csearch_path={s.db_schema},public,extensions -cstatement_timeout=120000",
         }
-    return create_engine(url, pool_pre_ping=True, **kwargs)
+    return create_engine(url, pool_pre_ping=True, hide_parameters=True, **kwargs)

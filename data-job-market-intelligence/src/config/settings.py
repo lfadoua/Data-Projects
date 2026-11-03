@@ -6,12 +6,14 @@ from pathlib import Path
 from typing import Literal
 
 from dotenv import dotenv_values
-from pydantic import BaseModel, Field, SecretStr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseModel):
+    model_config = ConfigDict(hide_input_in_errors=True)
+
     app_env: str = "development"
     streamlit_api_url: str = "http://127.0.0.1:8000"
     database_url: SecretStr = SecretStr("")
@@ -30,6 +32,9 @@ class Settings(BaseModel):
     openai_api_key: SecretStr = SecretStr("")
     llm_model: str = ""
     ollama_url: str = "http://localhost:11434"
+    ollama_num_gpu: int | None = Field(default=None, ge=0)
+    ollama_num_predict: int | None = Field(default=None, ge=32, le=4096)
+    ollama_timeout_seconds: float = Field(default=120, ge=1, le=600)
     rag_retrieval_k: int = Field(default=20, ge=1, le=100)
     rag_rerank_k: int = Field(default=8, ge=1, le=100)
     rag_context_k: int = Field(default=6, ge=1, le=20)

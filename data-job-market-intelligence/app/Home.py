@@ -1,4 +1,4 @@
-"""Live historical-market dashboard with evidence-backed assistant preview."""
+"""Interactive historical-market dashboard with evidence-backed assistant preview."""
 
 import streamlit as st
 
@@ -9,7 +9,8 @@ from app.components.ui import active_filters, read, setup
 
 setup(
     "Data Job Market Intelligence",
-    "Analytics, semantic search, and grounded AI insights for the data and AI job market.",
+    "Explore data and AI job postings collected January 12–17, 2024, "
+    "with analytics and cited answers.",
     active="Home",
     home=True,
 )
@@ -19,9 +20,7 @@ index = read("/api/system/status", quiet=True)
 home_metrics(overview, index)
 
 if overview is None:
-    empty_state(
-        "The data service is reconnecting", "Live charts will return when the API is available."
-    )
+    empty_state("The data service is reconnecting", "Charts will return when the API is available.")
 elif not overview["total_jobs"]:
     empty_state(
         "No matching postings", "Choose another country or reset the filters in Market Overview."

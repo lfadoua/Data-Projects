@@ -22,11 +22,11 @@ COUNTRY_ISO = {
 def style(figure, height=220):
     figure.update_layout(
         height=height,
-        margin=dict(l=0, r=4, t=8, b=12),
+        margin=dict(l=0, r=8, t=12, b=30),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Inter, Segoe UI, sans-serif", size=10, color="#6980a5"),
-        hoverlabel=dict(bgcolor="white", bordercolor="#e6ecf5", font_size=12),
+        font=dict(family="Inter, Segoe UI, sans-serif", size=12, color="#526581"),
+        hoverlabel=dict(bgcolor="white", bordercolor="#e6ecf5", font_size=14),
     )
     return figure
 
@@ -48,7 +48,7 @@ def skills_chart(items, total, limit=5):
             f'<span class="dj-skill-name">{safe(item["name"])}</span>'
             '<div class="dj-bar-track"><div class="dj-bar-fill" '
             f'style="width:{100 * count / maximum:.2f}%"></div></div>'
-            f'<span class="dj-skill-count">{count:,}</span></div>'
+            f'<span class="dj-skill-count">{count:,}<small>{percent:.2f}%</small></span></div>'
         )
     st.html("".join(rows))
 
@@ -71,8 +71,14 @@ def role_chart(items, key="roles", height=218, limit=7):
     style(figure, height)
     figure.update_layout(
         bargap=0.42,
-        xaxis=dict(title=None, gridcolor="#edf2fa", tickformat="~s", zeroline=False),
-        yaxis=dict(title=None, automargin=True, tickfont=dict(size=10)),
+        xaxis=dict(
+            title=dict(text="Postings", font=dict(size=12)),
+            gridcolor="#edf2fa",
+            tickformat="~s",
+            zeroline=False,
+            automargin=True,
+        ),
+        yaxis=dict(title=None, automargin=True, tickfont=dict(size=12)),
     )
     st.plotly_chart(figure, width="stretch", config=PLOT_CONFIG, key=key, theme=None)
 
@@ -90,7 +96,7 @@ def seniority_chart(items, total, key="seniority"):
             direction="clockwise",
             textinfo="none",
             marker=dict(colors=COLORS, line=dict(color="white", width=2)),
-            hovertemplate="%{label}<br>%{value:,} postings · %{percent}<extra></extra>",
+            hovertemplate="%{label}<br>%{value:,} postings · %{percent:.1%}<extra></extra>",
         )
     )
     style(figure, 197)
@@ -223,11 +229,20 @@ def heatmap(items, roles, skills, key="skill_role"):
             y=roles,
             colorscale=[[0, "#f2f7ff"], [0.45, "#8fc4ff"], [1, "#2563eb"]],
             hovertemplate="%{y} · %{x}<br>%{z:,} postings<extra></extra>",
-            colorbar=dict(thickness=9, title=dict(text="Jobs", font=dict(size=10))),
+            colorbar=dict(thickness=12, title=dict(text="Postings", font=dict(size=12))),
             xgap=3,
             ygap=3,
         )
     )
-    style(figure, max(290, len(roles) * 42))
-    figure.update_layout(xaxis=dict(title=None), yaxis=dict(title=None, automargin=True))
+    style(figure, max(360, len(roles) * 46 + 100))
+    figure.update_layout(
+        margin=dict(l=0, r=12, t=12, b=90),
+        xaxis=dict(title=None, tickangle=-30, automargin=True, tickfont=dict(size=12)),
+        yaxis=dict(title=None, automargin=True, tickfont=dict(size=12)),
+    )
     st.plotly_chart(figure, width="stretch", config=PLOT_CONFIG, key=key, theme=None)
+    with st.expander("Read Skill × Role counts as a table"):
+        st.dataframe(
+            pd.DataFrame(figure.data[0].z, index=roles, columns=skills).rename_axis("Role"),
+            width="stretch",
+        )

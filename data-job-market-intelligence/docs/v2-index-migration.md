@@ -1,5 +1,7 @@
 # V2 index migration and rollback
 
+> Historical migration procedure, not a startup guide. Do not rerun initialization or indexing on the existing complete index merely to start the app. Use [Setup](SETUP_AND_RUN.md). The configured target schema is djmi; later audits resolved this existing database through public. Do not migrate data just to match an old schema prefix.
+
 Run these commands from the application directory with its existing `.env`. Keep the
 database password in `.env`; do not put it in a command or commit it.
 

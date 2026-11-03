@@ -8,7 +8,7 @@ from app.components.ui import filters_panel, read, setup
 
 setup(
     "Job Explorer",
-    "Discover and explore data and AI opportunities from the historical job dataset.",
+    "Search historical data and AI job postings. Current availability is not guaranteed.",
 )
 filters = filters_panel()
 search = st.session_state.get("jobs_search", "")
@@ -38,7 +38,8 @@ page = st.session_state.setdefault("jobs_page", 1)
 params = {**filters, "limit": page_size, "offset": (page - 1) * page_size}
 if search:
     params["search"] = search
-data = read("/api/analytics/jobs", params)
+with st.spinner("Loading matching historical postings…"):
+    data = read("/api/analytics/jobs", params)
 if data is None:
     st.stop()
 total = data["total"]
@@ -48,12 +49,19 @@ section(
 )
 if search:
     chips([f"Search: {search}"], neutral=True)
+
+
+def clear_search():
+    st.session_state["jobs_search"] = ""
+    st.session_state["explorer_query"] = ""
+    st.session_state["explorer_seed"] = ""
+    st.session_state["jobs_page"] = 1
+
+
+if search:
+    st.button("Clear search", on_click=clear_search)
 if not total:
     empty_state("No matching jobs", "Try a broader search or remove one of the selected filters.")
-    if st.button("Clear search"):
-        st.session_state["jobs_search"] = ""
-        st.session_state["jobs_page"] = 1
-        st.rerun()
     st.stop()
 max_page = max(1, (total + page_size - 1) // page_size)
 if page > max_page:

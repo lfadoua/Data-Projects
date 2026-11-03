@@ -15,7 +15,12 @@ jobs:
           cache-dependency-path: data-job-market-intelligence/requirements*.txt
       - run: python -m pip install -r requirements-dev.txt
       - run: python -m ruff check .
-      - run: python -m pytest -q
+      - run: python -m ruff format --check .
+      - name: Offline tests (no external database or paid generation)
+        run: python -m pytest -q -m "not live" --tb=short
+        env:
+          LLM_PROVIDER: extractive
+          RUN_DB_INTEGRATION: '0'
       - name: Validate Compose
         run: |
           cp .env.example .env

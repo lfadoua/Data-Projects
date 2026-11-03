@@ -1,0 +1,2 @@
+# Optional, frontend-only offline speech recognition. No change to the base install.
+vosk==0.3.45

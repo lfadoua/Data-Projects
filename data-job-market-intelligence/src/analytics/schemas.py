@@ -21,6 +21,7 @@ class QueryRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     question: str = Field(min_length=3, max_length=2000)
     filters: Filters = Field(default_factory=Filters)
+    response_mode: Literal["extractive", "generative"] | None = None
 
 
 class Answer(BaseModel):

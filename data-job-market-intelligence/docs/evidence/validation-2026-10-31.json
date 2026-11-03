@@ -1,0 +1,16 @@
+{
+  "recorded_at": "2026-10-31",
+  "provenance": "Fresh local execution in this readiness review",
+  "tests_passed": 196,
+  "postgresql_tests_passed": 3,
+  "elapsed_seconds": 50.49,
+  "warnings": 2,
+  "ruff": "passed",
+  "format": "120 files already formatted",
+  "new_tests": 3,
+  "scope": "Full suite with read-only PostgreSQL integration enabled; test data is isolated elsewhere",
+  "hosted_ci_verified": false,
+  "docker_config_check": "docker compose -f compose.supabase.yml config --quiet: exit 0",
+  "docker_runtime": "User-reported successful builds/healthy services/SQL/extractive RAG; agent engine unreachable on 31 October",
+  "security": "Reachable history and current-file scan are bounded checks; exposed credential still requires manual rotation"
+}

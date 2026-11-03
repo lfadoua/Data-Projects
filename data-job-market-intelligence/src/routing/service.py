@@ -1,6 +1,7 @@
 """Dispatch to deterministic analytics or retrieved-evidence answers."""
 
 import re
+from time import perf_counter
 
 from src.analytics.schemas import Answer
 from src.analytics.service import AnalyticsService
@@ -224,14 +225,19 @@ def analytical_answer(question, filters, service, explicit_filters=None):
 
 
 def ask(request, engine):
+    started = perf_counter()
     service = AnalyticsService(engine)
     filters = merge_filters(extract_metadata(request.question, service.facets()), request.filters)
     decision = classify(request.question)
+    preparation_ms = (perf_counter() - started) * 1000
     if decision.route == "analytics":
         result = analytical_answer(request.question, filters, service, request.filters)
     else:
         from src.rag.service import answer_question
 
-        result = answer_question(request.question, filters, engine)
+        result = answer_question(
+            request.question, filters, engine, response_mode=request.response_mode
+        )
     result.metadata["routing"] = decision.model_dump()
+    result.metadata["request_preparation_ms"] = preparation_ms
     return result
