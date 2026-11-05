@@ -253,7 +253,7 @@ de passe ne doit être ajouté aux fichiers SQL.
 Pour ouvrir le premier exercice depuis PowerShell :
 
 ```powershell
-Set-Location 'C:\Users\HP\Documents\ChatGPT\Data Job Market Intelligence\data-job-market-intelligence'
+Set-Location 'C:\Users\HP\Documents\Data Projects\Data Job Market Intelligence\data-job-market-intelligence'
 notepad .\docs\sql\01_join_offres_python.sql
 ```
 

@@ -28,8 +28,8 @@ Les résultats analytiques portent sur un instantané historique collecté en ja
 
 ## 1. Où se trouve le projet et comment lire son histoire
 
-- Racine Git : `C:\Users\HP\Documents\ChatGPT\Data Job Market Intelligence`.
-- Application : `C:\Users\HP\Documents\ChatGPT\Data Job Market Intelligence\data-job-market-intelligence`.
+- Racine Git : `C:\Users\HP\Documents\Data Projects\Data Job Market Intelligence`.
+- Application : `C:\Users\HP\Documents\Data Projects\Data Job Market Intelligence\data-job-market-intelligence`.
 - Code et documentation suivis par Git : 106 fichiers lors de l’inspection finale.
 - Fichiers volumineux ou privés exclus de Git : environnement `.venv/`, configuration locale `.env`, CSV bruts, données traitées, modèles, checkpoints d'embeddings, journaux et résultats de validation JSON.
 - Le dossier voisin nommé **Data Job Market Intelligence Pipeline** est un ancien projet distinct. Ses chiffres de nettoyage ne doivent pas être substitués aux chiffres de la présente application. Ici, la base `djmi` contient 12 217 jobs.

@@ -24,7 +24,7 @@ in place.
 
 | Item | Git for Windows | Git inside Ubuntu/WSL |
 |---|---|---|
-| Repository | Parent `Data Job Market Intelligence` | The same checkout under `/mnt/c/Users/HP/Documents/ChatGPT/Data Job Market Intelligence` |
+| Repository | Parent `Data Job Market Intelligence` | The same checkout under `/mnt/c/Users/HP/Documents/Data Projects/Data Job Market Intelligence` |
 | `core.autocrlf` | `true`, from the Windows system Git configuration | Not explicitly configured |
 | `core.whitespace` | Not explicitly configured | Not explicitly configured |
 | `core.eol`, `core.safecrlf` | Not explicitly configured | Not explicitly configured |

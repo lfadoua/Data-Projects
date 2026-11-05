@@ -4,7 +4,7 @@
 
 Date : **30 octobre 2026**. Projet : Data Job Market Intelligence.
 
-Répertoire : `C:\Users\HP\Documents\ChatGPT\Data Job Market Intelligence\data-job-market-intelligence`.
+Répertoire : `C:\Users\HP\Documents\Data Projects\Data Job Market Intelligence\data-job-market-intelligence`.
 
 **Résultat : corrections ciblées réalisées et validées localement.** Les quatre
 tentatives mesurées du mode génératif restreint donnent désormais une réponse

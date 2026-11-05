@@ -192,14 +192,14 @@ Utiliser l'environnement virtuel et le `.env` déjà configurés dans ce checkou
 Dans un premier terminal :
 
 ```powershell
-Set-Location 'C:\Users\HP\Documents\ChatGPT\Data Job Market Intelligence\data-job-market-intelligence'
+Set-Location 'C:\Users\HP\Documents\Data Projects\Data Job Market Intelligence\data-job-market-intelligence'
 .\.venv\Scripts\python.exe -m uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```
 
 Dans un second terminal :
 
 ```powershell
-Set-Location 'C:\Users\HP\Documents\ChatGPT\Data Job Market Intelligence\data-job-market-intelligence'
+Set-Location 'C:\Users\HP\Documents\Data Projects\Data Job Market Intelligence\data-job-market-intelligence'
 .\.venv\Scripts\python.exe -m streamlit run app/Home.py --server.address 127.0.0.1 --server.port 8501
 ```
 

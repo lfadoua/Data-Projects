@@ -164,7 +164,7 @@ les embeddings déjà stockés. Aucun compte ni clé d'API n'est requis par Olla
 Dans PowerShell, depuis le dossier du projet :
 
 ```powershell
-Set-Location 'C:\Users\HP\Documents\ChatGPT\Data Job Market Intelligence\data-job-market-intelligence'
+Set-Location 'C:\Users\HP\Documents\Data Projects\Data Job Market Intelligence\data-job-market-intelligence'
 ollama pull qwen2.5:1.5b
 .\.venv\Scripts\python.exe -m uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```

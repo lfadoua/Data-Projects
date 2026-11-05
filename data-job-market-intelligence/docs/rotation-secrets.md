@@ -18,7 +18,7 @@ fonctionne ou un scan propre des fichiers ne prouve pas que ce mot de passe a
 3. Ouvrir localement `.env` dans un éditeur, sans afficher son contenu au terminal :
 
    ```powershell
-   Set-Location 'C:\Users\HP\Documents\ChatGPT\Data Job Market Intelligence\data-job-market-intelligence'
+   Set-Location 'C:\Users\HP\Documents\Data Projects\Data Job Market Intelligence\data-job-market-intelligence'
    notepad .env
    ```
 
